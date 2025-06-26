@@ -54,22 +54,10 @@ export function useAuth() {
             });
           }
         } else {
-          // If session exists but user is missing, try to get user directly
-          let user = session?.user ?? null;
-          
-          if (session && !user) {
-            try {
-              const { data: { user: directUser } } = await supabase.auth.getUser();
-              user = directUser;
-            } catch (userError) {
-              console.warn('Direct user retrieval error:', userError);
-            }
-          }
-          
           // Normal session handling
           if (mounted) {
             setAuthState({
-              user,
+              user: session?.user ?? null,
               session,
               loading: false,
             });
@@ -95,21 +83,9 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
       
-      let user = session?.user ?? null;
-      
-      // If session exists but user is missing, try to get user directly
-      if (session && !user) {
-        try {
-          const { data: { user: directUser } } = await supabase.auth.getUser();
-          user = directUser;
-        } catch (userError) {
-          console.warn('Direct user retrieval error in auth change:', userError);
-        }
-      }
-      
       if (mounted) {
         setAuthState({
-          user,
+          user: session?.user ?? null,
           session,
           loading: false,
         });
@@ -237,36 +213,6 @@ export function useAuth() {
     return { data, error };
   };
 
-  // Helper function to ensure user is loaded
-  const ensureUser = async (): Promise<User | null> => {
-    if (authState.loading) {
-      // Wait for auth to finish loading
-      return new Promise((resolve) => {
-        const checkAuth = () => {
-          if (!authState.loading) {
-            resolve(authState.user);
-          } else {
-            setTimeout(checkAuth, 100);
-          }
-        };
-        checkAuth();
-      });
-    }
-    
-    if (authState.user) {
-      return authState.user;
-    }
-    
-    // Try to get user directly from Supabase
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    } catch (error) {
-      console.warn('Failed to get user directly:', error);
-      return null;
-    }
-  };
-
   return {
     ...authState,
     signUp,
@@ -275,6 +221,5 @@ export function useAuth() {
     signInWithGoogle,
     signInWithProvider,
     resetPassword,
-    ensureUser,
   };
 }
