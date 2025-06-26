@@ -142,6 +142,24 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  // Helper function to determine MIME type from file extension
+  const getMimeTypeFromExtension = (uri: string): string => {
+    const extension = uri.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg'; // Default fallback
+    }
+  };
+
   const handleMobileImageUpload = useCallback(async () => {
     try {
       // Request permissions
@@ -161,11 +179,10 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        // if (!user) {
-        //   showError('You must be logged in to upload a profile picture.');
-        //   return;
-        // }
-        
+        if (!user) {
+          showError('You must be logged in to upload a profile picture.');
+          return;
+        }
 
         const asset = result.assets[0];
         
@@ -173,12 +190,28 @@ export default function ProfileScreen() {
         const response = await fetch(asset.uri);
         const blob = await response.blob();
         
-        // Create a file with proper extension
+        // Determine proper MIME type
+        let mimeType = asset.type || getMimeTypeFromExtension(asset.uri);
+        
+        // Handle the case where iOS returns just "image"
+        if (mimeType === 'image') {
+          mimeType = getMimeTypeFromExtension(asset.uri);
+        }
+        
+        // Validate MIME type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(mimeType)) {
+          showError('Please select a JPG, PNG, WEBP, or GIF image');
+          return;
+        }
+        
+        // Create a file with proper extension and MIME type
         const fileExtension = asset.uri.split('.').pop() || 'jpg';
         const fileName = `profile-${Date.now()}.${fileExtension}`;
         
+        // Create a proper File object with correct MIME type
         const file = new File([blob], fileName, {
-          type: asset.type || 'image/jpeg',
+          type: mimeType,
         });
 
         // Validate file size (5MB)
@@ -186,6 +219,14 @@ export default function ProfileScreen() {
           showError('Image size must be less than 5MB');
           return;
         }
+
+        console.log('Uploading file:', {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          originalType: asset.type,
+          detectedType: mimeType
+        });
 
         setIsUploading(true);
         try {
@@ -202,16 +243,16 @@ export default function ProfileScreen() {
       console.error('Error picking image:', error);
       showError('Failed to pick image. Please try again.');
     }
-  }, [uploadProfilePicture, showSuccess, showError]);
+  }, [uploadProfilePicture, showSuccess, showError, user]);
 
   const handleFileSelect = useCallback(async (event: any) => {
     const file = event.target.files[0];
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      showError('Please select a JPG, PNG, or WEBP image');
+      showError('Please select a JPG, PNG, WEBP, or GIF image');
       return;
     }
 
@@ -236,7 +277,7 @@ export default function ProfileScreen() {
     } finally {
       setIsUploading(false);
     }
-  }, [uploadProfilePicture, showSuccess, showError]);
+  }, [uploadProfilePicture, showSuccess, showError, user]);
 
   const handleRemoveImage = useCallback(() => {
     Alert.alert(
@@ -264,7 +305,7 @@ export default function ProfileScreen() {
         },
       ]
     );
-  }, [removeProfilePicture, showSuccess, showError]);
+  }, [removeProfilePicture, showSuccess, showError, user]);
 
   const getInitials = useCallback(() => {
     if (formData.firstName && formData.lastName) {
@@ -587,7 +628,7 @@ export default function ProfileScreen() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           style={{ display: 'none' }}
           onChange={handleFileSelect}
         />
