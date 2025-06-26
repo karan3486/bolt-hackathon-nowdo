@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -12,6 +11,7 @@ import {
   ActivityIndicator,
   Dimensions,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
@@ -132,15 +132,21 @@ export default function ProfileScreen() {
     updateFormData();
     setErrors({});
     setIsEditing(false);
-  }, [updateFormData]);
+  }, [updateFormData, user, showError]);
 
   const handleImageUpload = useCallback(() => {
+    // Check authentication first
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     if (Platform.OS === 'web') {
       fileInputRef.current?.click();
     } else {
       handleMobileImageUpload();
     }
-  }, []);
+  }, [user, showError]);
 
   // Helper function to determine MIME type from file extension
   const getMimeTypeFromExtension = (uri: string): string => {
@@ -161,6 +167,12 @@ export default function ProfileScreen() {
   };
 
   const handleMobileImageUpload = useCallback(async () => {
+    // Double-check authentication at the start
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,6 +191,7 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
+        // Check authentication again before processing
         if (!user) {
           showError('You must be logged in to upload a profile picture.');
           return;
@@ -249,6 +262,12 @@ export default function ProfileScreen() {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Check authentication first
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
@@ -259,11 +278,6 @@ export default function ProfileScreen() {
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       showError('Image size must be less than 5MB');
-      return;
-    }
-
-    if (!user) {
-      showError('You must be logged in to upload a profile picture.');
       return;
     }
 
@@ -280,6 +294,11 @@ export default function ProfileScreen() {
   }, [uploadProfilePicture, showSuccess, showError, user]);
 
   const handleRemoveImage = useCallback(() => {
+    if (!user) {
+      showError('You must be logged in to remove a profile picture.');
+      return;
+    }
+
     Alert.alert(
       'Remove Profile Picture',
       'Are you sure you want to remove your profile picture?',
@@ -289,11 +308,6 @@ export default function ProfileScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            if (!user) {
-              showError('You must be logged in to remove a profile picture.');
-              return;
-            }
-            
             try {
               await removeProfilePicture();
               showSuccess('Profile picture removed successfully!');
