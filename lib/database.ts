@@ -497,7 +497,7 @@ export class DatabaseService {
     console.log('DatabaseService.uploadProfilePicture - File:', file.name, file.size, file.type);
     
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${userId}-${Math.random()}.${fileExt}`;
+    const fileName = `${userId}-${Math.random()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
