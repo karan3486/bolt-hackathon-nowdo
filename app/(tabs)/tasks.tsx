@@ -29,6 +29,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { useUserData } from '../../hooks/useUserData';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
+import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
 import { 
   addTask, 
   updateTask, 
@@ -40,7 +41,9 @@ import {
 } from '../../store/slices/tasksSlice';
 import { Task, TaskCategory, TaskPriority, TaskStatus } from '../../types';
 import { taskCategoryColors, priorityColors, getTaskColor } from '../../constants/theme';
-import { Plus, Search, Filter, CircleCheck as CheckCircle, Circle, Clock, Trash2, CreditCard as Edit3, MoveVertical as MoreVertical, X, Calendar, CircleAlert as AlertCircle } from 'lucide-react-native';
+import { canCreateTask, getTaskLimitMessage } from '../../utils/taskLimits';
+import PaywallModal from '../../components/PaywallModal';
+import { Plus, Search, Filter, CircleCheck as CheckCircle, Circle, Clock, Trash2, CreditCard as Edit3, MoveVertical as MoreVertical, X, Calendar, CircleAlert as AlertCircle, Crown } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '../../components/DateTimePicker';
 
@@ -50,6 +53,7 @@ export default function TasksScreen() {
   const theme = useTheme();
   const dispatch = useDispatch();
   const { showSuccess, showError } = useAuthMessages();
+  const { hasPremiumAccess } = useSubscriptionStatus();
   const params = useLocalSearchParams();
   
   const { tasks, filter, searchQuery } = useSelector((state: RootState) => state.tasks);
@@ -65,6 +69,7 @@ export default function TasksScreen() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isFilterMenuVisible, setIsFilterMenuVisible] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
   
   // Form state without duration
   const [formData, setFormData] = useState({
@@ -75,6 +80,9 @@ export default function TasksScreen() {
     scheduledDate: new Date().toISOString().split('T')[0], // Today's date
     scheduledTime: '09:00', // Default 9 AM
   });
+
+  // Check subscription status
+  const isPremium = hasPremiumAccess();
 
   // Handle navigation from Priority Matrix
   useEffect(() => {
@@ -142,6 +150,15 @@ export default function TasksScreen() {
   const handleAddTask = () => {
     if (!formData.title.trim()) {
       showError('Please enter a task title');
+      return;
+    }
+
+    // Check task limits before creating
+    const taskLimitCheck = canCreateTask(tasks, isPremium);
+    
+    if (!taskLimitCheck.canCreate) {
+      // Show paywall for free users who hit the limit
+      setShowPaywall(true);
       return;
     }
 
@@ -322,6 +339,10 @@ export default function TasksScreen() {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
   };
+
+  // Get task limit info
+  const taskLimitInfo = canCreateTask(tasks, isPremium);
+  const taskLimitMessage = getTaskLimitMessage(taskLimitInfo.currentCount, taskLimitInfo.limit, isPremium);
 
   const { total, completed, pending } = getCompletionStats();
 
@@ -572,6 +593,16 @@ export default function TasksScreen() {
               </ScrollView>
             </View>
 
+            {/* Task Limit Warning for Free Users */}
+            {!isPremium && !taskLimitInfo.canCreate && (
+              <View style={[styles.limitWarning, { backgroundColor: theme.colors.errorContainer }]}>
+                <AlertCircle size={16} color={theme.colors.error} />
+                <Text style={[styles.limitWarningText, { color: theme.colors.error }]}>
+                  {taskLimitInfo.message}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.modalActions}>
               <Button 
                 onPress={onDismiss} 
@@ -607,9 +638,22 @@ export default function TasksScreen() {
             <Title style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
               Tasks
             </Title>
-            <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-              {total} task{total !== 1 ? 's' : ''} • {completed} completed • {pending} pending
-            </Text>
+            <View style={styles.headerSubtitleRow}>
+              <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                {taskLimitMessage}
+              </Text>
+              {!isPremium && (
+                <TouchableOpacity 
+                  style={styles.premiumBadge}
+                  onPress={() => setShowPaywall(true)}
+                >
+                  <Crown size={12} color="#FF9800" />
+                  <Text style={[styles.premiumBadgeText, { color: "#FF9800" }]}>
+                    Upgrade
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -753,7 +797,15 @@ export default function TasksScreen() {
       <FAB
         icon={() => <Plus size={24} color={theme.colors.onPrimary} />}
         style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        onPress={() => setIsAddModalVisible(true)}
+        onPress={() => {
+          // Check task limits before opening modal
+          const taskLimitCheck = canCreateTask(tasks, isPremium);
+          if (!taskLimitCheck.canCreate) {
+            setShowPaywall(true);
+          } else {
+            setIsAddModalVisible(true);
+          }
+        }}
         size="medium"
       />
 
@@ -769,6 +821,15 @@ export default function TasksScreen() {
         onDismiss={() => setIsEditModalVisible(false)}
         onSubmit={handleUpdateTask}
         title="Edit Task"
+      />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onPurchaseSuccess={() => {
+          showSuccess('Welcome to Premium! You can now create unlimited tasks.');
+        }}
       />
     </SafeAreaView>
   );
@@ -790,8 +851,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
+  headerSubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   headerSubtitle: {
     fontSize: 14,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF9800' + '15',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    gap: 4,
+  },
+  premiumBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   quickStats: {
     flexDirection: 'row',
@@ -1037,6 +1116,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
     height: 28,
+  },
+  limitWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  limitWarningText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   modalActions: {
     flexDirection: 'row',
