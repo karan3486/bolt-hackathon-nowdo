@@ -111,6 +111,11 @@ export default function ProfileScreen() {
   }, [formData]);
 
   const handleSave = useCallback(async () => {
+    if (!user?.id) {
+      showError('Please sign in to save your profile.');
+      return;
+    }
+
     if (!validateForm()) return;
 
     try {
@@ -124,8 +129,8 @@ export default function ProfileScreen() {
   }, [formData, validateForm, updateProfile, showSuccess, showError]);
 
   const handleCancel = useCallback(() => {
-    if (!user) {
-      showError('Authentication required to modify profile.');
+    if (!user?.id) {
+      showError('Please sign in to modify your profile.');
       return;
     }
     
@@ -161,6 +166,12 @@ export default function ProfileScreen() {
   };
 
   const handleMobileImageUpload = useCallback(async () => {
+    // Check authentication state before proceeding
+    if (!user?.id) {
+      showError('Please sign in to upload a profile picture.');
+      return;
+    }
+
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,11 +190,6 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
-
         const asset = result.assets[0];
         
         // Create a File-like object for mobile
@@ -249,6 +255,12 @@ export default function ProfileScreen() {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Check authentication state before proceeding
+    if (!user?.id) {
+      showError('Please sign in to upload a profile picture.');
+      return;
+    }
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
@@ -259,11 +271,6 @@ export default function ProfileScreen() {
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       showError('Image size must be less than 5MB');
-      return;
-    }
-
-    if (!user) {
-      showError('You must be logged in to upload a profile picture.');
       return;
     }
 
@@ -280,6 +287,11 @@ export default function ProfileScreen() {
   }, [uploadProfilePicture, showSuccess, showError, user]);
 
   const handleRemoveImage = useCallback(() => {
+    if (!user?.id) {
+      showError('Please sign in to remove a profile picture.');
+      return;
+    }
+
     Alert.alert(
       'Remove Profile Picture',
       'Are you sure you want to remove your profile picture?',
@@ -289,11 +301,6 @@ export default function ProfileScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            if (!user) {
-              showError('You must be logged in to remove a profile picture.');
-              return;
-            }
-            
             try {
               await removeProfilePicture();
               showSuccess('Profile picture removed successfully!');
@@ -339,9 +346,34 @@ export default function ProfileScreen() {
   }, [errors]);
 
   // Show loading state while checking authentication
-  if (loading && !user) {
+  if (loading) {
     return (
       <LoadingOverlay visible={true} message="Loading profile..." />
+    );
+  }
+
+  // Show sign-in message if user is not authenticated
+  if (!user?.id) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.authRequiredContainer}>
+          <Text style={[styles.authRequiredTitle, { color: theme.colors.onBackground }]}>
+            Authentication Required
+          </Text>
+          <Text style={[styles.authRequiredMessage, { color: theme.colors.onSurfaceVariant }]}>
+            Please sign in to view and edit your profile.
+          </Text>
+          <TouchableOpacity
+            style={[styles.signInButton, { backgroundColor: theme.colors.primary }]}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.signInButtonText, { color: theme.colors.onPrimary }]}>
+              Go Back
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -798,6 +830,33 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  authRequiredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  authRequiredTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  authRequiredMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  signInButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  signInButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
