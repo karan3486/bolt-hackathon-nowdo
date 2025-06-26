@@ -1,4 +1,5 @@
 import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
+import { Task } from '../types';
 
 export const lightTheme = {
   ...MD3LightTheme,
@@ -11,6 +12,7 @@ export const lightTheme = {
     surfaceVariant: '#F3F0F7',
     background: '#FEFBFF',
     error: '#BA1A1A',
+    errorContainer: '#FFDAD6',
     success: '#4CAF50',
     warning: '#FF9800',
     outline: '#79747E',
@@ -44,6 +46,7 @@ export const darkTheme = {
     surfaceVariant: '#49454F',
     background: '#141218',
     error: '#F2B8B5',
+    errorContainer: '#93000A',
     success: '#81C784',
     warning: '#FFB74D',
     outline: '#938F99',

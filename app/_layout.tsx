@@ -16,6 +16,8 @@ import { useUserData } from '../hooks/useUserData';
 import { loadTasksFromDatabase } from '../store/slices/tasksSlice';
 import { loadHabitsFromDatabase } from '../store/slices/habitsSlice';
 import { loadSessionsFromDatabase } from '../store/slices/pomodoroSlice';
+import { setThemeMode } from '../store/slices/themeSlice';
+import { DatabaseService } from '../lib/database';
 
 function ThemedApp() {
   const colorScheme = useColorScheme();
@@ -32,6 +34,29 @@ function ThemedApp() {
     pomodoroSessions, 
     loading: dataLoading 
   } = useUserData({ autoLoad: true });
+
+  // Load user settings and apply theme
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      if (user?.id) {
+        try {
+          const settings = await DatabaseService.getUserSettings(user.id);
+          if (settings?.theme_preference) {
+            dispatch(setThemeMode(settings.theme_preference));
+          }
+        } catch (error) {
+          console.error('Error loading user settings:', error);
+          // Use default dark theme if settings can't be loaded
+          dispatch(setThemeMode('dark'));
+        }
+      } else {
+        // Set dark theme as default for non-authenticated users
+        dispatch(setThemeMode('dark'));
+      }
+    };
+
+    loadUserSettings();
+  }, [user?.id, dispatch]);
 
   // Sync database data with Redux store when data loads
   useEffect(() => {

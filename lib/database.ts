@@ -536,6 +536,70 @@ export class DatabaseService {
     return true;
   }
 
+  // User settings operations
+  static async getUserSettings(userId: string) {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      console.error('Error fetching user settings:', error);
+      throw new Error(`Failed to fetch user settings: ${error.message}`);
+    }
+
+    // If no settings exist, create default ones
+    if (!data) {
+      return await this.createUserSettings(userId);
+    }
+
+    return data;
+  }
+
+  static async createUserSettings(userId: string) {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .insert({
+        user_id: userId,
+        theme_preference: 'dark',
+        notifications_enabled: true,
+        email_notifications: true,
+        push_notifications: true,
+        language: 'en',
+        privacy_analytics: true,
+        privacy_crash_reports: true,
+        auto_backup: true,
+        sound_effects: true,
+        haptic_feedback: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating user settings:', error);
+      throw new Error(`Failed to create user settings: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async updateUserSettings(userId: string, updates: any) {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .update(updates)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating user settings:', error);
+      throw new Error(`Failed to update user settings: ${error.message}`);
+    }
+
+    return data;
+  }
+
   // Data management operations
   static async clearUserData(userId: string) {
     const { data, error } = await supabase.rpc('clear_user_data', {
