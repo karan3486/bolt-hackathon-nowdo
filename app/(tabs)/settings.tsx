@@ -585,7 +585,7 @@ export default function SettingsScreen() {
         />
       )}
 
-      <LoadingOverlay visible={loading} message="Updating settings..." />
+      
     </SafeAreaView>
   );
 }
