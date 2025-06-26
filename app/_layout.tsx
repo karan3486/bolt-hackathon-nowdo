@@ -18,6 +18,32 @@ import { loadHabitsFromDatabase } from '../store/slices/habitsSlice';
 import { loadSessionsFromDatabase } from '../store/slices/pomodoroSlice';
 import { setThemeMode } from '../store/slices/themeSlice';
 import { DatabaseService } from '../lib/database';
+import Purchases from 'react-native-purchases';
+
+// RevenueCat Configuration
+const configureRevenueCat = async () => {
+  try {
+    if (Platform.OS === 'ios') {
+      // Replace with your iOS API key from RevenueCat dashboard
+      await Purchases.configure({
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || 'your_ios_api_key_here',
+      });
+    } else if (Platform.OS === 'android') {
+      // Replace with your Android API key from RevenueCat dashboard
+      await Purchases.configure({
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || 'your_android_api_key_here',
+      });
+    } else {
+      // Web platform - RevenueCat doesn't support web
+      console.log('RevenueCat: Web platform detected, skipping configuration');
+      return;
+    }
+
+    console.log('RevenueCat configured successfully');
+  } catch (error) {
+    console.error('RevenueCat configuration error:', error);
+  }
+};
 
 function ThemedApp() {
   const colorScheme = useColorScheme();
@@ -34,6 +60,13 @@ function ThemedApp() {
     pomodoroSessions, 
     loading: dataLoading 
   } = useUserData({ autoLoad: true });
+
+  // Configure RevenueCat on app start
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      configureRevenueCat();
+    }
+  }, []);
 
   // Load user settings and apply theme
   useEffect(() => {

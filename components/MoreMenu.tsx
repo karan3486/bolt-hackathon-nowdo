@@ -21,7 +21,8 @@ import {
   Settings,
   Database,
   LogOut,
-  Sparkles
+  Sparkles,
+  Crown
 } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -85,6 +86,14 @@ export default function MoreMenu({ visible, onClose }: MoreMenuProps) {
       route: '/(tabs)/calendar',
       description: 'View tasks and habits in calendar format',
       color: '#2196F3'
+    },
+    {
+      id: 'subscription',
+      title: 'Premium',
+      icon: Crown,
+      route: '/(tabs)/subscription',
+      description: 'Manage your subscription and premium features',
+      color: '#FF9800'
     }
   ];
 
