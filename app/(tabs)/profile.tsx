@@ -161,6 +161,25 @@ export default function ProfileScreen() {
   };
 
   const handleMobileImageUpload = useCallback(async () => {
+    // Add debugging log
+    console.log('handleMobileImageUpload - Auth state:', { 
+      user: !!user, 
+      userId: user?.id, 
+      loading 
+    });
+    
+    // Wait for auth to load before checking user
+    if (loading) {
+      console.log('Auth still loading, please wait...');
+      return;
+    }
+    
+    if (!user) {
+      console.log('No user found, showing error');
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+    
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,12 +198,15 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
-
         const asset = result.assets[0];
+        
+        console.log('Image selected:', {
+          uri: asset.uri,
+          type: asset.type,
+          size: asset.fileSize,
+          width: asset.width,
+          height: asset.height
+        });
         
         // Create a File-like object for mobile
         const response = await fetch(asset.uri);
@@ -197,6 +219,8 @@ export default function ProfileScreen() {
         if (mimeType === 'image') {
           mimeType = getMimeTypeFromExtension(asset.uri);
         }
+        
+        console.log('Determined MIME type:', mimeType);
         
         // Validate MIME type
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -224,8 +248,7 @@ export default function ProfileScreen() {
           name: file.name,
           size: file.size,
           type: file.type,
-          originalType: asset.type,
-          detectedType: mimeType
+          originalType: asset.type
         });
 
         setIsUploading(true);
@@ -243,11 +266,22 @@ export default function ProfileScreen() {
       console.error('Error picking image:', error);
       showError('Failed to pick image. Please try again.');
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, user, loading]);
 
   const handleFileSelect = useCallback(async (event: any) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    // Wait for auth to load before checking user
+    if (loading) {
+      showError('Please wait while we verify your authentication.');
+      return;
+    }
+    
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -262,11 +296,6 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!user) {
-      showError('You must be logged in to upload a profile picture.');
-      return;
-    }
-
     setIsUploading(true);
     try {
       await uploadProfilePicture(file);
@@ -277,9 +306,19 @@ export default function ProfileScreen() {
     } finally {
       setIsUploading(false);
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, user, loading]);
 
   const handleRemoveImage = useCallback(() => {
+    if (loading) {
+      showError('Please wait while we verify your authentication.');
+      return;
+    }
+    
+    if (!user) {
+      showError('You must be logged in to remove a profile picture.');
+      return;
+    }
+    
     Alert.alert(
       'Remove Profile Picture',
       'Are you sure you want to remove your profile picture?',
@@ -289,11 +328,6 @@ export default function ProfileScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            if (!user) {
-              showError('You must be logged in to remove a profile picture.');
-              return;
-            }
-            
             try {
               await removeProfilePicture();
               showSuccess('Profile picture removed successfully!');
@@ -305,7 +339,7 @@ export default function ProfileScreen() {
         },
       ]
     );
-  }, [removeProfilePicture, showSuccess, showError, user]);
+  }, [removeProfilePicture, showSuccess, showError, user, loading]);
 
   const getInitials = useCallback(() => {
     if (formData.firstName && formData.lastName) {
@@ -339,9 +373,25 @@ export default function ProfileScreen() {
   }, [errors]);
 
   // Show loading state while checking authentication
-  if (loading && !user) {
+  if (loading) {
     return (
       <LoadingOverlay visible={true} message="Loading profile..." />
+    );
+  }
+
+  // Show error if not authenticated after loading
+  if (!loading && !user) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorTitle, { color: theme.colors.error }]}>
+            Authentication Required
+          </Text>
+          <Text style={[styles.errorMessage, { color: theme.colors.onSurfaceVariant }]}>
+            Please sign in to access your profile.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -800,5 +850,22 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
