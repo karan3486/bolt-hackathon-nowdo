@@ -44,6 +44,7 @@ import { RootState } from '../../store';
 import AuthMessage from '../../components/AuthMessage';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import DataManagementModal from '../../components/DataManagementModal';
+import { supabase } from '../../lib/supabase';
 
 interface UserSettings {
   id?: string;
@@ -105,9 +106,9 @@ export default function SettingsScreen() {
         .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 

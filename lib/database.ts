@@ -237,7 +237,7 @@ export class DatabaseService {
       .eq('user_id', userId)
       .eq('habit_id', habitId)
       .eq('completion_date', date)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       // Update existing completion
@@ -361,9 +361,9 @@ export class DatabaseService {
       .from('user_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+    if (error) {
       console.error('Error fetching user preferences:', error);
       throw new Error(`Failed to fetch user preferences: ${error.message}`);
     }
@@ -542,9 +542,9 @@ export class DatabaseService {
       .from('user_settings')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+    if (error) {
       console.error('Error fetching user settings:', error);
       throw new Error(`Failed to fetch user settings: ${error.message}`);
     }
