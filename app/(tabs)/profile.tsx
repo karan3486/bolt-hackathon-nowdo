@@ -400,12 +400,17 @@ export default function ProfileScreen() {
     console.log('Profile screen - Auth loading:', authLoading);
   }, [user, authLoading]);
 
-  // Single return statement with conditional rendering inside
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {authLoading ? (
-        <LoadingOverlay visible={true} message="Loading profile..." />
-      ) : !user ? (
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <LoadingOverlay visible={true} message="Loading profile..." />
+    );
+  }
+
+  // Show error if user is not authenticated
+  if (!user) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
             You must be logged in to view your profile.
@@ -419,249 +424,251 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={24} color={theme.colors.onBackground} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
-              Profile
-            </Text>
-            <TouchableOpacity
-              onPress={isEditing ? handleSave : () => setIsEditing(true)}
-              style={styles.actionButton}
-              disabled={loading}
-            >
-              {isEditing ? (
-                <Save size={24} color={theme.colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color={theme.colors.onBackground} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+          Profile
+        </Text>
+        <TouchableOpacity
+          onPress={isEditing ? handleSave : () => setIsEditing(true)}
+          style={styles.actionButton}
+          disabled={loading}
+        >
+          {isEditing ? (
+            <Save size={24} color={theme.colors.primary} />
+          ) : (
+            <Edit3 size={24} color={theme.colors.primary} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.content}>
+          {/* Profile Picture Section */}
+          <View style={styles.profilePictureSection}>
+            <View style={styles.profilePictureContainer}>
+              {profile?.profilePictureUrl ? (
+                <Image 
+                  source={{ uri: profile.profilePictureUrl }}
+                  style={styles.profilePicture}
+                  resizeMode="cover"
+                />
               ) : (
-                <Edit3 size={24} color={theme.colors.primary} />
+                <View style={[styles.profileInitials, { backgroundColor: theme.colors.primary }]}>
+                  <Text style={[styles.initialsText, { color: theme.colors.onPrimary }]}>
+                    {getInitials()}
+                  </Text>
+                </View>
               )}
-            </TouchableOpacity>
-          </View>
-
-          <KeyboardAvoidingView 
-            style={styles.keyboardView}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          >
-            <View style={styles.content}>
-              {/* Profile Picture Section */}
-              <View style={styles.profilePictureSection}>
-                <View style={styles.profilePictureContainer}>
-                  {profile?.profilePictureUrl ? (
-                    <Image 
-                      source={{ uri: profile.profilePictureUrl }}
-                      style={styles.profilePicture}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.profileInitials, { backgroundColor: theme.colors.primary }]}>
-                      <Text style={[styles.initialsText, { color: theme.colors.onPrimary }]}>
-                        {getInitials()}
-                      </Text>
-                    </View>
-                  )}
-                  
-                  {isUploading && (
-                    <View style={styles.uploadingOverlay}>
-                      <ActivityIndicator size="large" color={theme.colors.primary} />
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.profilePictureActions}>
-                  <TouchableOpacity
-                    style={[styles.pictureActionButton, { backgroundColor: theme.colors.primary }]}
-                    onPress={handleImageUpload}
-                    disabled={isUploading || authLoading}
-                    activeOpacity={0.7}
-                  >
-                    <Upload size={16} color={theme.colors.onPrimary} />
-                    <Text style={[styles.pictureActionText, { color: theme.colors.onPrimary }]}>
-                      Upload
-                    </Text>
-                  </TouchableOpacity>
-
-                  {profile?.profilePictureUrl && (
-                    <TouchableOpacity
-                      style={[styles.pictureActionButton, { backgroundColor: theme.colors.errorContainer }]}
-                      onPress={handleRemoveImage}
-                      disabled={isUploading || authLoading}
-                      activeOpacity={0.7}
-                    >
-                      <Trash2 size={16} color={theme.colors.error} />
-                      <Text style={[styles.pictureActionText, { color: theme.colors.error }]}>
-                        Remove
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-
-              {/* Form Fields */}
-              <View style={styles.formSection}>
-                {/* Name Fields */}
-                <View style={styles.nameRow}>
-                  <View style={[styles.inputContainer, styles.halfWidth]}>
-                    <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
-                      First Name *
-                    </Text>
-                    <View style={[
-                      styles.inputWrapper, 
-                      { 
-                        backgroundColor: theme.colors.surface, 
-                        borderColor: errors.firstName ? theme.colors.error : theme.colors.outline 
-                      }
-                    ]}>
-                      <User size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: theme.colors.onSurface }]}
-                        value={formData.firstName}
-                        onChangeText={(text) => handleFieldChange('firstName', text)}
-                        placeholder="First name"
-                        placeholderTextColor={theme.colors.onSurfaceVariant}
-                        editable={isEditing}
-                        autoCapitalize="words"
-                        autoCorrect={false}
-                        autoComplete="off"
-                      />
-                    </View>
-                    {errors.firstName && <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.firstName}</Text>}
-                  </View>
-
-                  <View style={[styles.inputContainer, styles.halfWidth]}>
-                    <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
-                      Last Name *
-                    </Text>
-                    <View style={[
-                      styles.inputWrapper, 
-                      { 
-                        backgroundColor: theme.colors.surface, 
-                        borderColor: errors.lastName ? theme.colors.error : theme.colors.outline 
-                      }
-                    ]}>
-                      <User size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: theme.colors.onSurface }]}
-                        value={formData.lastName}
-                        onChangeText={(text) => handleFieldChange('lastName', text)}
-                        placeholder="Last name"
-                        placeholderTextColor={theme.colors.onSurfaceVariant}
-                        editable={isEditing}
-                        autoCapitalize="words"
-                        autoCorrect={false}
-                        autoComplete="off"
-                      />
-                    </View>
-                    {errors.lastName && <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.lastName}</Text>}
-                  </View>
-                </View>
-
-                {/* Other Fields */}
-                {renderInputField(
-                  'email',
-                  'Email Address *',
-                  <Mail size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
-                  'Email address',
-                  'email-address',
-                  'none'
-                )}
-
-                {renderInputField(
-                  'phoneNumber',
-                  'Phone Number',
-                  <Phone size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
-                  'Phone number',
-                  'phone-pad',
-                  'none'
-                )}
-
-                {/* Date of Birth */}
-                <View style={styles.inputContainer}>
-                  {isEditing ? (
-                    <DateOfBirthPicker
-                      date={formData.dateOfBirth || ''}
-                      onDateChange={(date) => handleFieldChange('dateOfBirth', date)}
-                      label="Date of Birth"
-                    />
-                  ) : (
-                    <>
-                      <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
-                        Date of Birth
-                      </Text>
-                      <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                        <Calendar size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
-                        <Text style={[styles.input, { color: theme.colors.onSurface }]}>
-                          {formData.dateOfBirth ? formatDate(formData.dateOfBirth) : 'Not set'}
-                        </Text>
-                      </View>
-                    </>
-                  )}
-                </View>
-
-                {renderInputField(
-                  'location',
-                  'Location',
-                  <MapPin size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
-                  'City, Country',
-                  'default',
-                  'words'
-                )}
-
-                {renderInputField(
-                  'profession',
-                  'Profession',
-                  <Briefcase size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
-                  'Your profession',
-                  'default',
-                  'words'
-                )}
-              </View>
-
-              {/* Action Buttons */}
-              {isEditing && (
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={[styles.cancelButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                    onPress={handleCancel}
-                    activeOpacity={0.7}
-                  >
-                    <X size={20} color={theme.colors.onSurface} />
-                    <Text style={[styles.cancelButtonText, { color: theme.colors.onSurface }]}>
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
-                    onPress={handleSave}
-                    disabled={loading}
-                    activeOpacity={0.7}
-                  >
-                    <Save size={20} color={theme.colors.onPrimary} />
-                    <Text style={[styles.saveButtonText, { color: theme.colors.onPrimary }]}>
-                      Save Changes
-                    </Text>
-                  </TouchableOpacity>
+              
+              {isUploading && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
               )}
             </View>
-          </KeyboardAvoidingView>
 
-          {/* Hidden file input for web */}
-          {Platform.OS === 'web' && (
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              style={{ display: 'none' }}
-              onChange={handleFileSelect}
-            />
+            <View style={styles.profilePictureActions}>
+              <TouchableOpacity
+                style={[styles.pictureActionButton, { backgroundColor: theme.colors.primary }]}
+                onPress={handleImageUpload}
+                disabled={isUploading || authLoading}
+                activeOpacity={0.7}
+              >
+                <Upload size={16} color={theme.colors.onPrimary} />
+                <Text style={[styles.pictureActionText, { color: theme.colors.onPrimary }]}>
+                  Upload
+                </Text>
+              </TouchableOpacity>
+
+              {profile?.profilePictureUrl && (
+                <TouchableOpacity
+                  style={[styles.pictureActionButton, { backgroundColor: theme.colors.errorContainer }]}
+                  onPress={handleRemoveImage}
+                  disabled={isUploading || authLoading}
+                  activeOpacity={0.7}
+                >
+                  <Trash2 size={16} color={theme.colors.error} />
+                  <Text style={[styles.pictureActionText, { color: theme.colors.error }]}>
+                    Remove
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Form Fields */}
+          <View style={styles.formSection}>
+            {/* Name Fields */}
+            <View style={styles.nameRow}>
+              <View style={[styles.inputContainer, styles.halfWidth]}>
+                <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
+                  First Name *
+                </Text>
+                <View style={[
+                  styles.inputWrapper, 
+                  { 
+                    backgroundColor: theme.colors.surface, 
+                    borderColor: errors.firstName ? theme.colors.error : theme.colors.outline 
+                  }
+                ]}>
+                  <User size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: theme.colors.onSurface }]}
+                    value={formData.firstName}
+                    onChangeText={(text) => handleFieldChange('firstName', text)}
+                    placeholder="First name"
+                    placeholderTextColor={theme.colors.onSurfaceVariant}
+                    editable={isEditing}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    autoComplete="off"
+                  />
+                </View>
+                {errors.firstName && <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.firstName}</Text>}
+              </View>
+
+              <View style={[styles.inputContainer, styles.halfWidth]}>
+                <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
+                  Last Name *
+                </Text>
+                <View style={[
+                  styles.inputWrapper, 
+                  { 
+                    backgroundColor: theme.colors.surface, 
+                    borderColor: errors.lastName ? theme.colors.error : theme.colors.outline 
+                  }
+                ]}>
+                  <User size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: theme.colors.onSurface }]}
+                    value={formData.lastName}
+                    onChangeText={(text) => handleFieldChange('lastName', text)}
+                    placeholder="Last name"
+                    placeholderTextColor={theme.colors.onSurfaceVariant}
+                    editable={isEditing}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    autoComplete="off"
+                  />
+                </View>
+                {errors.lastName && <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.lastName}</Text>}
+              </View>
+            </View>
+
+            {/* Other Fields */}
+            {renderInputField(
+              'email',
+              'Email Address *',
+              <Mail size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
+              'Email address',
+              'email-address',
+              'none'
+            )}
+
+            {renderInputField(
+              'phoneNumber',
+              'Phone Number',
+              <Phone size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
+              'Phone number',
+              'phone-pad',
+              'none'
+            )}
+
+            {/* Date of Birth */}
+            <View style={styles.inputContainer}>
+              {isEditing ? (
+                <DateOfBirthPicker
+                  date={formData.dateOfBirth || ''}
+                  onDateChange={(date) => handleFieldChange('dateOfBirth', date)}
+                  label="Date of Birth"
+                />
+              ) : (
+                <>
+                  <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
+                    Date of Birth
+                  </Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
+                    <Calendar size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
+                    <Text style={[styles.input, { color: theme.colors.onSurface }]}>
+                      {formData.dateOfBirth ? formatDate(formData.dateOfBirth) : 'Not set'}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {renderInputField(
+              'location',
+              'Location',
+              <MapPin size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
+              'City, Country',
+              'default',
+              'words'
+            )}
+
+            {renderInputField(
+              'profession',
+              'Profession',
+              <Briefcase size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />,
+              'Your profession',
+              'default',
+              'words'
+            )}
+          </View>
+
+          {/* Action Buttons */}
+          {isEditing && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.cancelButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                onPress={handleCancel}
+                activeOpacity={0.7}
+              >
+                <X size={20} color={theme.colors.onSurface} />
+                <Text style={[styles.cancelButtonText, { color: theme.colors.onSurface }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
+                onPress={handleSave}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Save size={20} color={theme.colors.onPrimary} />
+                <Text style={[styles.saveButtonText, { color: theme.colors.onPrimary }]}>
+                  Save Changes
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
-        </>
+        </View>
+      </KeyboardAvoidingView>
+
+      {/* Hidden file input for web */}
+      {Platform.OS === 'web' && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
+        />
       )}
 
       {message && (
@@ -671,6 +678,7 @@ export default function ProfileScreen() {
           onDismiss={clearMessage}
         />
       )}
+      
     </SafeAreaView>
   );
 }
