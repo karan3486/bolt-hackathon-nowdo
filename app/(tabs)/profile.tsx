@@ -29,7 +29,7 @@ const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile, updateProfile, uploadProfilePicture, removeProfilePicture, loading, loadProfile } = useUserData();
   const { message, showSuccess, showError, clearMessage } = useAuthMessages();
   
@@ -47,6 +47,13 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('Profile screen - Auth loading:', authLoading);
+    console.log('Profile screen - User authenticated:', !!user);
+    console.log('Profile screen - User ID:', user?.id);
+  }, [user, authLoading]);
 
   // Memoized profile loading
   const memoizedLoadProfile = useCallback(() => {
@@ -79,12 +86,6 @@ export default function ProfileScreen() {
     updateFormData();
   }, [updateFormData]);
 
-  // Debug authentication state
-  useEffect(() => {
-    console.log('Profile screen - User authenticated:', !!user);
-    console.log('Profile screen - User ID:', user?.id);
-  }, [user]);
-
   const validateForm = useCallback(() => {
     const newErrors: { [key: string]: string } = {};
 
@@ -113,6 +114,10 @@ export default function ProfileScreen() {
   const handleSave = useCallback(async () => {
     if (!validateForm()) return;
 
+    if (!user) {
+      showError('Authentication required to save profile.');
+      return;
+    }
     try {
       await updateProfile(formData);
       setIsEditing(false);
@@ -124,23 +129,24 @@ export default function ProfileScreen() {
   }, [formData, validateForm, updateProfile, showSuccess, showError]);
 
   const handleCancel = useCallback(() => {
-    if (!user) {
-      showError('Authentication required to modify profile.');
-      return;
-    }
-    
     updateFormData();
     setErrors({});
     setIsEditing(false);
   }, [updateFormData]);
 
   const handleImageUpload = useCallback(() => {
+    // Check authentication state first
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     if (Platform.OS === 'web') {
       fileInputRef.current?.click();
     } else {
       handleMobileImageUpload();
     }
-  }, []);
+  }, [user, showError]);
 
   // Helper function to determine MIME type from file extension
   const getMimeTypeFromExtension = (uri: string): string => {
@@ -161,6 +167,12 @@ export default function ProfileScreen() {
   };
 
   const handleMobileImageUpload = useCallback(async () => {
+    // Double-check authentication state
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,11 +191,6 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
-
         const asset = result.assets[0];
         
         // Create a File-like object for mobile
@@ -243,11 +250,16 @@ export default function ProfileScreen() {
       console.error('Error picking image:', error);
       showError('Failed to pick image. Please try again.');
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, user, getMimeTypeFromExtension]);
 
   const handleFileSelect = useCallback(async (event: any) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -259,11 +271,6 @@ export default function ProfileScreen() {
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       showError('Image size must be less than 5MB');
-      return;
-    }
-
-    if (!user) {
-      showError('You must be logged in to upload a profile picture.');
       return;
     }
 
@@ -280,6 +287,11 @@ export default function ProfileScreen() {
   }, [uploadProfilePicture, showSuccess, showError, user]);
 
   const handleRemoveImage = useCallback(() => {
+    if (!user) {
+      showError('You must be logged in to remove a profile picture.');
+      return;
+    }
+
     Alert.alert(
       'Remove Profile Picture',
       'Are you sure you want to remove your profile picture?',
@@ -289,11 +301,6 @@ export default function ProfileScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            if (!user) {
-              showError('You must be logged in to remove a profile picture.');
-              return;
-            }
-            
             try {
               await removeProfilePicture();
               showSuccess('Profile picture removed successfully!');
@@ -338,10 +345,26 @@ export default function ProfileScreen() {
     }
   }, [errors]);
 
-  // Show loading state while checking authentication
-  if (loading && !user) {
+  // Show loading state while checking authentication or loading profile
+  if (authLoading || (loading && !user)) {
     return (
       <LoadingOverlay visible={true} message="Loading profile..." />
+    );
+  }
+
+  // Show error state if user is not authenticated after loading
+  if (!authLoading && !user) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorTitle, { color: theme.colors.error }]}>
+            Authentication Required
+          </Text>
+          <Text style={[styles.errorMessage, { color: theme.colors.onSurfaceVariant }]}>
+            Please sign in to access your profile.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -649,6 +672,23 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   keyboardView: {
     flex: 1,
