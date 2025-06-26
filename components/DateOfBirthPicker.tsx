@@ -18,14 +18,14 @@ interface DateOfBirthPickerProps {
   date: string; // YYYY-MM-DD format
   onDateChange: (date: string) => void;
   label?: string;
-  editable?: boolean;
+  disabled?: boolean;
 }
 
 export default function DateOfBirthPicker({
   date,
   onDateChange,
   label = "Date of Birth",
-  editable = true,
+  disabled = false,
 }: DateOfBirthPickerProps) {
   const theme = useTheme();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -102,26 +102,6 @@ export default function DateOfBirthPicker({
 
   const days = Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1);
 
-  // If not editable, render static display
-  if (!editable) {
-    return (
-      <View style={styles.container}>
-        <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-          {label}
-        </Text>
-        <View style={[styles.pickerButton, { 
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.outline,
-        }]}>
-          <Calendar size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
-          <Text style={[styles.pickerText, { color: theme.colors.onSurface }]}>
-            {date ? formatDate(date) : 'Not set'}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: theme.colors.onSurface }]}>
@@ -135,10 +115,10 @@ export default function DateOfBirthPicker({
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.outline,
           },
-          !editable && styles.disabledButton
+          disabled && styles.disabledButton
         ]}
-        onPress={() => editable && setShowDatePicker(true)}
-        disabled={!editable}
+        onPress={() => !disabled && setShowDatePicker(true)}
+        disabled={disabled}
       >
         <Calendar size={20} color={theme.colors.primary} />
         <Text style={[styles.pickerText, { color: theme.colors.onSurface }]}>
@@ -382,9 +362,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
-  },
-  inputIcon: {
-    marginRight: 12,
   },
   modalOverlay: {
     flex: 1,
