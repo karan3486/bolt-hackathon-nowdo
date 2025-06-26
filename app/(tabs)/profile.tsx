@@ -585,25 +585,12 @@ export default function ProfileScreen() {
 
             {/* Date of Birth */}
             <View style={styles.inputContainer}>
-              {isEditing ? (
-                <DateOfBirthPicker
-                  date={formData.dateOfBirth || ''}
-                  onDateChange={(date) => handleFieldChange('dateOfBirth', date)}
-                  label="Date of Birth"
-                />
-              ) : (
-                <>
-                  <Text style={[styles.inputLabel, { color: theme.colors.onSurface }]}>
-                    Date of Birth
-                  </Text>
-                  <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                    <Calendar size={20} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />
-                    <Text style={[styles.input, { color: theme.colors.onSurface }]}>
-                      {formData.dateOfBirth ? formatDate(formData.dateOfBirth) : 'Not set'}
-                    </Text>
-                  </View>
-                </>
-              )}
+              <DateOfBirthPicker
+                date={formData.dateOfBirth || ''}
+                onDateChange={(date) => handleFieldChange('dateOfBirth', date)}
+                label="Date of Birth"
+                editable={isEditing}
+              />
             </View>
 
             {renderInputField(
