@@ -367,11 +367,6 @@ export function useUserData(options: UseUserDataOptions = {}) {
         lastUpdated: new Date(),
       }));
 
-      // Force a profile reload to ensure we have the latest data
-      setTimeout(() => {
-        loadProfile();
-      }, 1000);
-
       return pictureUrl;
     } catch (error) {
       console.error('Error uploading profile picture:', error);
@@ -380,7 +375,7 @@ export function useUserData(options: UseUserDataOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, loadProfile]);
+  }, [user?.id]);
 
   const removeProfilePicture = useCallback(async () => {
     if (!user?.id) throw new Error('User not authenticated');
@@ -400,16 +395,11 @@ export function useUserData(options: UseUserDataOptions = {}) {
         profile: transformedProfile,
         lastUpdated: new Date(),
       }));
-
-      // Force a profile reload to ensure we have the latest data
-      setTimeout(() => {
-        loadProfile();
-      }, 500);
     } catch (error) {
       console.error('Error removing profile picture:', error);
       throw error;
     }
-  }, [user?.id, state.profile?.profilePictureUrl, loadProfile]);
+  }, [user?.id, state.profile?.profilePictureUrl]);
 
   // Data management operations
   const clearAllData = useCallback(async () => {

@@ -45,7 +45,6 @@ export default function ProfileScreen() {
     profession: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [profileImageKey, setProfileImageKey] = useState(0); // Force re-render of image
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,11 +78,6 @@ export default function ProfileScreen() {
   useEffect(() => {
     updateFormData();
   }, [updateFormData]);
-
-  // Force image refresh when profile picture URL changes
-  useEffect(() => {
-    setProfileImageKey(prev => prev + 1);
-  }, [profile?.profilePictureUrl]);
 
   // Debug authentication state
   useEffect(() => {
@@ -123,15 +117,11 @@ export default function ProfileScreen() {
       await updateProfile(formData);
       setIsEditing(false);
       showSuccess('Profile updated successfully!');
-      // Refresh profile data to ensure UI is up to date
-      setTimeout(() => {
-        loadProfile();
-      }, 500);
     } catch (error) {
       console.error('Error updating profile:', error);
       showError('Failed to update profile. Please try again.');
     }
-  }, [formData, validateForm, updateProfile, showSuccess, showError, loadProfile]);
+  }, [formData, validateForm, updateProfile, showSuccess, showError]);
 
   const handleCancel = useCallback(() => {
     if (!user) {
@@ -255,8 +245,6 @@ export default function ProfileScreen() {
         try {
           await uploadProfilePicture(file);
           showSuccess('Profile picture updated successfully!');
-          // Force image refresh
-          setProfileImageKey(prev => prev + 1);
         } catch (error) {
           console.error('Error uploading image:', error);
           showError('Failed to upload image. Please try again.');
@@ -297,8 +285,6 @@ export default function ProfileScreen() {
     try {
       await uploadProfilePicture(file);
       showSuccess('Profile picture updated successfully!');
-      // Force image refresh
-      setProfileImageKey(prev => prev + 1);
     } catch (error) {
       console.error('Error uploading image:', error);
       showError('Failed to upload image. Please try again.');
@@ -325,8 +311,6 @@ export default function ProfileScreen() {
             try {
               await removeProfilePicture();
               showSuccess('Profile picture removed successfully!');
-              // Force image refresh
-              setProfileImageKey(prev => prev + 1);
             } catch (error) {
               console.error('Error removing image:', error);
               showError('Failed to remove profile picture. Please try again.');
@@ -455,17 +439,9 @@ export default function ProfileScreen() {
             <View style={styles.profilePictureContainer}>
               {profile?.profilePictureUrl ? (
                 <Image 
-                  key={`profile-${profileImageKey}`}
-                  source={{ 
-                    uri: `${profile.profilePictureUrl}?t=${Date.now()}` // Add timestamp to force refresh
-                  }}
+                  source={{ uri: profile.profilePictureUrl }}
                   style={styles.profilePicture}
                   resizeMode="cover"
-                  onError={(error) => {
-                    console.error('Profile image load error:', error);
-                    // Force refresh of profile data if image fails to load
-                    loadProfile();
-                  }}
                 />
               ) : (
                 <View style={[styles.profileInitials, { backgroundColor: theme.colors.primary }]}>
