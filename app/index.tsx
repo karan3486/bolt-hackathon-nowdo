@@ -7,16 +7,7 @@ import { Redirect } from 'expo-router';
 export default function Index() {
   const { user, loading } = useAuth();
 
-  // Handle web-specific redirects
-  useEffect(() => {
-    if (!loading && typeof window !== 'undefined') {
-      if (user) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(auth)/sign-in');
-      }
-    }
-  }, [user, loading]);
+  // Show loading while auth state is being determined
   if (loading) {
     return <View style={{ flex: 1 }} />;
   }

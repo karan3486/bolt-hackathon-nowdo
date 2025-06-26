@@ -17,37 +17,73 @@ export function useAuth() {
   });
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      // If there's an error (like invalid refresh token), clear everything
-      if (error) {
-        console.warn('Session retrieval error:', error.message);
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Clear any stored Supabase tokens
-        if (typeof window !== 'undefined') {
-          const keys = Object.keys(localStorage);
-          keys.forEach(key => {
-            if (key.startsWith('sb-') || key.includes('supabase')) {
-              localStorage.removeItem(key);
-            }
-          });
+        // If there's an error (like invalid refresh token), clear everything
+        if (error) {
+          console.warn('Session retrieval error:', error.message);
           
-          const sessionKeys = Object.keys(sessionStorage);
-          sessionKeys.forEach(key => {
-            if (key.startsWith('sb-') || key.includes('supabase')) {
-              sessionStorage.removeItem(key);
-            }
+          // Clear any stored Supabase tokens only on web
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+              if (key.startsWith('sb-') || key.includes('supabase')) {
+                localStorage.removeItem(key);
+              }
+            });
+            
+            const sessionKeys = Object.keys(sessionStorage);
+            sessionKeys.forEach(key => {
+              if (key.startsWith('sb-') || key.includes('supabase')) {
+                sessionStorage.removeItem(key);
+              }
+            });
+          }
+          
+          // Set clean auth state
+          if (mounted) {
+            setAuthState({
+              user: null,
+              session: null,
+              loading: false,
+            });
+          }
+        } else {
+          // Normal session handling
+          if (mounted) {
+            setAuthState({
+              user: session?.user ?? null,
+              session,
+              loading: false,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        if (mounted) {
+          setAuthState({
+            user: null,
+            session: null,
+            loading: false,
           });
         }
-        
-        // Set clean auth state
-        setAuthState({
-          user: null,
-          session: null,
-          loading: false,
-        });
-      } else {
-        // Normal session handling
+      }
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (mounted) {
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -56,18 +92,10 @@ export function useAuth() {
       }
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthState({
-        user: session?.user ?? null,
-        session,
-        loading: false,
-      });
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
@@ -173,9 +201,14 @@ export function useAuth() {
       error: { message: `${provider} sign-in coming soon!` } 
     };
   };
+
   const resetPassword = async (email: string) => {
+    const redirectTo = Platform.OS === 'web' 
+      ? `${window.location.origin}/reset-password`
+      : 'nowdo://reset-password';
+      
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo,
     });
     return { data, error };
   };

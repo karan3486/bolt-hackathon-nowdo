@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
 import { useDispatch } from 'react-redux';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { store } from '../store';
 import { lightTheme, darkTheme } from '../constants/theme';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -22,6 +22,7 @@ function ThemedApp() {
   const themeMode = useSelector((state: RootState) => state.theme.mode);
   const dispatch = useDispatch();
   const { user, loading, signOut } = useAuth();
+  const [hasNavigated, setHasNavigated] = useState(false);
   
   // Initialize user data when user is authenticated
   const { 
@@ -66,24 +67,43 @@ function ThemedApp() {
     }
   }, [themeMode, colorScheme]);
 
-  // Force redirect on web if user becomes null
+  // Handle navigation only once when auth state is determined
   useEffect(() => {
-    if (!loading && !user && typeof window !== 'undefined' && window.location) {
-      const currentPath = window.location.pathname;
-      const isAuthPath = currentPath.includes('/sign-in') || 
-                        currentPath.includes('/sign-up') || 
-                        currentPath.includes('/forgot-password') ||
-                        currentPath.includes('/oauth-callback');
-      
-      if (!isAuthPath) {
-        // Clear any invalid tokens to prevent refresh token errors
-        signOut();
-        // Use router for smoother navigation
-        router.replace('/(auth)/sign-in');
-        return;
+    if (!loading && !hasNavigated) {
+      if (!user) {
+        // Only handle web-specific redirects on web platform
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+          const currentPath = window.location.pathname;
+          const isAuthPath = currentPath.includes('/sign-in') || 
+                            currentPath.includes('/sign-up') || 
+                            currentPath.includes('/forgot-password') ||
+                            currentPath.includes('/oauth-callback');
+          
+          if (!isAuthPath) {
+            // Clear any invalid tokens to prevent refresh token errors
+            signOut();
+            // Use router for smoother navigation
+            router.replace('/(auth)/sign-in');
+          }
+        } else if (Platform.OS !== 'web') {
+          // For mobile platforms, navigate to auth without checking paths
+          router.replace('/(auth)/sign-in');
+        }
+      } else {
+        // User is authenticated, navigate to main app
+        router.replace('/(tabs)');
       }
+      setHasNavigated(true);
     }
-  }, [user, loading, router, signOut]);
+  }, [user, loading, hasNavigated, signOut]);
+
+  // Reset navigation flag when user changes (for logout scenarios)
+  useEffect(() => {
+    if (!loading) {
+      setHasNavigated(false);
+    }
+  }, [user?.id, loading]);
+
   const theme = isDark ? darkTheme : lightTheme;
 
   // Show loading screen while checking auth state
