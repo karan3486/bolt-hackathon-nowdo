@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { useState } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
-import { Chrome as Home, SquareCheck as CheckSquare, Sparkles, Timer, Target, MoveHorizontal as MoreHorizontal, Settings } from 'lucide-react-native';
+import { Chrome as Home, SquareCheck as CheckSquare, Sparkles, Timer, Target, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import MoreMenu from '../../components/MoreMenu';
 
 export default function TabsLayout() {
@@ -84,15 +84,6 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="settings"
-          options={{
-            title: '',
-            tabBarIcon: ({ color, size }) => (
-              <Settings color={color} size={size} />
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="more"
           options={{
             title: '',
@@ -123,6 +114,12 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="profile"
+          options={{
+            href: null, // Hide from tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
           options={{
             href: null, // Hide from tab bar
           }}
