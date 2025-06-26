@@ -412,14 +412,14 @@ export default function TasksScreen() {
                 textStyle={{ color: taskCategoryColors[task.category], fontSize: 10 }}
                 compact
               >
-                <Text>{task.category}</Text>
+                {task.category}
               </Chip>
               <Chip 
                 style={[styles.priorityChip, { backgroundColor: taskColor + '15' }]}
                 textStyle={{ color: taskColor, fontSize: 10 }}
                 compact
               >
-                <Text>{task.priority}</Text>
+                {task.priority}
               </Chip>
             </View>
           </View>
@@ -536,7 +536,7 @@ export default function TasksScreen() {
                     }}
                     compact
                   >
-                    <Text>{category.charAt(0).toUpperCase() + category.slice(1)}</Text>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
                   </Chip>
                 ))}
               </ScrollView>
@@ -566,7 +566,7 @@ export default function TasksScreen() {
                     }}
                     compact
                   >
-                    <Text>{priority.charAt(0).toUpperCase() + priority.slice(1)}</Text>
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
                   </Chip>
                 ))}
               </ScrollView>
@@ -708,7 +708,7 @@ export default function TasksScreen() {
               onClose={() => handleFilterChange('dateFilter', 'today')}
               compact
             >
-              <Text>Date: {filter.dateFilter}</Text>
+              Date: {filter.dateFilter}
             </Chip>
           )}
           {filter.status !== 'all' && (
@@ -717,7 +717,7 @@ export default function TasksScreen() {
               onClose={() => handleFilterChange('status', 'all')}
               compact
             >
-              <Text>Status: {filter.status}</Text>
+              Status: {filter.status}
             </Chip>
           )}
           {filter.priority !== 'all' && (
@@ -726,7 +726,7 @@ export default function TasksScreen() {
               onClose={() => handleFilterChange('priority', 'all')}
               compact
             >
-              <Text>Priority: {filter.priority}</Text>
+              Priority: {filter.priority}
             </Chip>
           )}
           {filter.category !== 'all' && (
@@ -735,7 +735,7 @@ export default function TasksScreen() {
               onClose={() => handleFilterChange('category', 'all')}
               compact
             >
-              <Text>Category: {filter.category}</Text>
+              Category: {filter.category}
             </Chip>
           )}
         </View>
