@@ -29,7 +29,7 @@ const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user, loading: authLoading, ensureUser } = useAuth();
   const { profile, updateProfile, uploadProfilePicture, removeProfilePicture, loading, loadProfile } = useUserData();
   const { message, showSuccess, showError, clearMessage } = useAuthMessages();
   
@@ -83,7 +83,8 @@ export default function ProfileScreen() {
   useEffect(() => {
     console.log('Profile screen - User authenticated:', !!user);
     console.log('Profile screen - User ID:', user?.id);
-  }, [user]);
+    console.log('Profile screen - Auth loading:', authLoading);
+  }, [user, authLoading]);
 
   const validateForm = useCallback(() => {
     const newErrors: { [key: string]: string } = {};
@@ -124,11 +125,6 @@ export default function ProfileScreen() {
   }, [formData, validateForm, updateProfile, showSuccess, showError]);
 
   const handleCancel = useCallback(() => {
-    if (!user) {
-      showError('Authentication required to modify profile.');
-      return;
-    }
-    
     updateFormData();
     setErrors({});
     setIsEditing(false);
@@ -162,6 +158,15 @@ export default function ProfileScreen() {
 
   const handleMobileImageUpload = useCallback(async () => {
     try {
+      // Ensure user is authenticated before proceeding
+      const currentUser = await ensureUser();
+      console.log('Current user in handleMobileImageUpload:', currentUser);
+      
+      if (!currentUser) {
+        showError('You must be logged in to upload a profile picture.');
+        return;
+      }
+
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -179,11 +184,6 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
-
         const asset = result.assets[0];
         
         // Create a File-like object for mobile
@@ -225,7 +225,8 @@ export default function ProfileScreen() {
           size: file.size,
           type: file.type,
           originalType: asset.type,
-          detectedType: mimeType
+          detectedType: mimeType,
+          userId: currentUser.id
         });
 
         setIsUploading(true);
@@ -243,7 +244,7 @@ export default function ProfileScreen() {
       console.error('Error picking image:', error);
       showError('Failed to pick image. Please try again.');
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, ensureUser]);
 
   const handleFileSelect = useCallback(async (event: any) => {
     const file = event.target.files[0];
@@ -262,7 +263,9 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!user) {
+    // Ensure user is authenticated
+    const currentUser = await ensureUser();
+    if (!currentUser) {
       showError('You must be logged in to upload a profile picture.');
       return;
     }
@@ -277,7 +280,7 @@ export default function ProfileScreen() {
     } finally {
       setIsUploading(false);
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, ensureUser]);
 
   const handleRemoveImage = useCallback(() => {
     Alert.alert(
@@ -289,7 +292,8 @@ export default function ProfileScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            if (!user) {
+            const currentUser = await ensureUser();
+            if (!currentUser) {
               showError('You must be logged in to remove a profile picture.');
               return;
             }
@@ -305,7 +309,7 @@ export default function ProfileScreen() {
         },
       ]
     );
-  }, [removeProfilePicture, showSuccess, showError, user]);
+  }, [removeProfilePicture, showSuccess, showError, ensureUser]);
 
   const getInitials = useCallback(() => {
     if (formData.firstName && formData.lastName) {
@@ -339,10 +343,8 @@ export default function ProfileScreen() {
   }, [errors]);
 
   // Show loading state while checking authentication
-  if (loading && !user) {
-    return (
-      <LoadingOverlay visible={true} message="Loading profile..." />
-    );
+  if (authLoading) {
+    return <LoadingOverlay visible={true} message="Loading profile..." />;
   }
 
   // Memoized input components to prevent unnecessary re-renders
