@@ -19,7 +19,7 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
+    // Get initial session with proper error handling
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();

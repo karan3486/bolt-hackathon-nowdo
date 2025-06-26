@@ -29,7 +29,7 @@ const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile, updateProfile, uploadProfilePicture, removeProfilePicture, loading, loadProfile } = useUserData();
   const { message, showSuccess, showError, clearMessage } = useAuthMessages();
   
@@ -132,7 +132,7 @@ export default function ProfileScreen() {
     updateFormData();
     setErrors({});
     setIsEditing(false);
-  }, [updateFormData]);
+  }, [updateFormData, user, showError]);
 
   const handleImageUpload = useCallback(() => {
     if (Platform.OS === 'web') {
@@ -161,6 +161,14 @@ export default function ProfileScreen() {
   };
 
   const handleMobileImageUpload = useCallback(async () => {
+    // Wait for auth to be fully loaded before proceeding
+    if (authLoading) return;
+    
+    if (!user) {
+      showError('You must be logged in to upload a profile picture.');
+      return;
+    }
+
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,11 +187,6 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
-
         const asset = result.assets[0];
         
         // Create a File-like object for mobile
@@ -243,7 +246,7 @@ export default function ProfileScreen() {
       console.error('Error picking image:', error);
       showError('Failed to pick image. Please try again.');
     }
-  }, [uploadProfilePicture, showSuccess, showError, user]);
+  }, [uploadProfilePicture, showSuccess, showError, user, authLoading]);
 
   const handleFileSelect = useCallback(async (event: any) => {
     const file = event.target.files[0];
@@ -339,7 +342,7 @@ export default function ProfileScreen() {
   }, [errors]);
 
   // Show loading state while checking authentication
-  if (loading && !user) {
+  if (authLoading) {
     return (
       <LoadingOverlay visible={true} message="Loading profile..." />
     );
