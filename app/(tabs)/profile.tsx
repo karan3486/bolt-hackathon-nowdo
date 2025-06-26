@@ -161,10 +161,11 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
-          showError('You must be logged in to upload a profile picture.');
-          return;
-        }
+        // if (!user) {
+        //   showError('You must be logged in to upload a profile picture.');
+        //   return;
+        // }
+        
 
         const asset = result.assets[0];
         
