@@ -94,8 +94,10 @@ export default function MoreMenu({ visible, onClose }: MoreMenuProps) {
       title: 'Settings',
       icon: Settings,
       action: () => {
-        // TODO: Navigate to settings page
-        console.log('Navigate to settings');
+        onClose();
+        setTimeout(() => {
+          router.push('/(tabs)/settings');
+        }, 100);
       },
       description: 'App preferences and configuration',
       color: '#6B7280'
