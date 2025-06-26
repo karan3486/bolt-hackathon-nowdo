@@ -54,11 +54,6 @@ export default function ProfileScreen() {
     }
   }, [profile, loadProfile]);
 
-  // Load profile data when component mounts
-  useEffect(() => {
-    memoizedLoadProfile();
-  }, [memoizedLoadProfile]);
-
   // Update form data when profile loads - memoized to prevent unnecessary re-renders
   const updateFormData = useCallback(() => {
     if (profile) {
@@ -73,17 +68,6 @@ export default function ProfileScreen() {
       });
     }
   }, [profile]);
-
-  useEffect(() => {
-    updateFormData();
-  }, [updateFormData]);
-
-  // Debug authentication state
-  useEffect(() => {
-    console.log('Profile screen - User authenticated:', !!user);
-    console.log('Profile screen - User ID:', user?.id);
-    console.log('Profile screen - Auth loading:', authLoading);
-  }, [user, authLoading]);
 
   const validateForm = useCallback(() => {
     const newErrors: { [key: string]: string } = {};
@@ -362,35 +346,7 @@ export default function ProfileScreen() {
     }
   }, [errors]);
 
-  // Show loading state while checking authentication
-  if (authLoading) {
-    return (
-      <LoadingOverlay visible={true} message="Loading profile..." />
-    );
-  }
-
-  // Show error if user is not authenticated
-  if (!user) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            You must be logged in to view your profile.
-          </Text>
-          <TouchableOpacity
-            style={[styles.signInButton, { backgroundColor: theme.colors.primary }]}
-            onPress={() => router.replace('/(auth)/sign-in')}
-          >
-            <Text style={[styles.signInButtonText, { color: theme.colors.onPrimary }]}>
-              Sign In
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Memoized input components to prevent unnecessary re-renders
+  // Memoized input components to prevent unnecessary re-renders - MOVED TO TOP LEVEL
   const renderInputField = useCallback((
     field: string,
     label: string,
@@ -427,6 +383,50 @@ export default function ProfileScreen() {
       {errors[field] && <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors[field]}</Text>}
     </View>
   ), [formData, errors, isEditing, theme.colors, handleFieldChange]);
+
+  // Load profile data when component mounts
+  useEffect(() => {
+    memoizedLoadProfile();
+  }, [memoizedLoadProfile]);
+
+  useEffect(() => {
+    updateFormData();
+  }, [updateFormData]);
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('Profile screen - User authenticated:', !!user);
+    console.log('Profile screen - User ID:', user?.id);
+    console.log('Profile screen - Auth loading:', authLoading);
+  }, [user, authLoading]);
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <LoadingOverlay visible={true} message="Loading profile..." />
+    );
+  }
+
+  // Show error if user is not authenticated
+  if (!user) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            You must be logged in to view your profile.
+          </Text>
+          <TouchableOpacity
+            style={[styles.signInButton, { backgroundColor: theme.colors.primary }]}
+            onPress={() => router.replace('/(auth)/sign-in')}
+          >
+            <Text style={[styles.signInButtonText, { color: theme.colors.onPrimary }]}>
+              Sign In
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
