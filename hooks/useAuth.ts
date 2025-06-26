@@ -22,14 +22,6 @@ export function useAuth() {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        // First try to get the current user directly
-        const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError && !userError.message?.includes('session_not_found')) {
-          console.warn('User retrieval error:', userError.message);
-        }
-        
-        // Then get the session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         // If there's an error (like invalid refresh token), clear everything
@@ -62,12 +54,10 @@ export function useAuth() {
             });
           }
         } else {
-          // Use currentUser if available, fallback to session user
-          const finalUser = currentUser || session?.user || null;
-          
+          // Normal session handling
           if (mounted) {
             setAuthState({
-              user: finalUser,
+              user: session?.user ?? null,
               session,
               loading: false,
             });
