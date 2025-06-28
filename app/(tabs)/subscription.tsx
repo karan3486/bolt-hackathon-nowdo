@@ -272,7 +272,6 @@ export default function SubscriptionScreen() {
         }}
       />
 
-      <LoadingOverlay visible={loading || initializing} message="Loading subscription info..." />
     </SafeAreaView>
   );
 }
