@@ -14,7 +14,6 @@ import { router } from 'expo-router';
 import { useRevenueCat } from '../../hooks/useRevenueCat';
 import { useAuth } from '../../hooks/useAuth';
 import PaywallModal from '../../components/PaywallModal';
-import LoadingOverlay from '../../components/LoadingOverlay';
 import { 
   Crown, 
   ArrowLeft, 
