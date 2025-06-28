@@ -206,22 +206,24 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
                 <Text style={[styles.packagesTitle, { color: theme.colors.onSurface }]}>
                   Choose Your Plan
                 </Text>
-                {packages.map((packageItem, index) => (
+                {packages.map((packageItem, index) => {
                   const savings = getPackageSavings(packageItem);
                   const isPopular = packageItem.identifier.includes('annual') || packageItem.identifier.includes('yearly');
                   
-                  <TouchableOpacity
-                    key={packageItem.identifier}
-                    style={[
-                      styles.packageItem,
+                  return (
+                    <TouchableOpacity
+                      key={packageItem.identifier}
+                      style={[
+                        styles.packageItem,
+                        {
                           backgroundColor: isPopular ? theme.colors.primary + '10' : theme.colors.background,
                           borderColor: isPopular ? theme.colors.primary : theme.colors.outline,
                           borderWidth: isPopular ? 2 : 1,
-                        borderColor: theme.colors.outline,
-                      }
-                    ]}
-                    onPress={() => handlePurchase(packageItem)}
-                    disabled={purchasing}
+                        }
+                      ]}
+                      onPress={() => handlePurchase(packageItem)}
+                      disabled={purchasing}
+                    >
                       {isPopular && (
                         <View style={[styles.popularBadge, { backgroundColor: theme.colors.primary }]}>
                           <Text style={[styles.popularBadgeText, { color: theme.colors.onPrimary }]}>
@@ -229,25 +231,25 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
                           </Text>
                         </View>
                       )}
-                  >
-                    <View style={styles.packageContent}>
-                      <Text style={[styles.packageTitle, { color: theme.colors.onSurface }]}>
-                        {getPackageTitle(packageItem)}
+                      <View style={styles.packageContent}>
+                        <Text style={[styles.packageTitle, { color: theme.colors.onSurface }]}>
+                          {getPackageTitle(packageItem)}
+                        </Text>
+                        <Text style={[styles.packageDescription, { color: theme.colors.onSurfaceVariant }]}>
+                          {getPackageDescription(packageItem)}
+                          {savings && (
+                            <Text style={[styles.packageSavings, { color: theme.colors.primary }]}>
+                              {savings}
+                            </Text>
+                          )}
+                        </Text>
+                      </View>
+                      <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>
+                        {formatPrice(packageItem)}
                       </Text>
-                      <Text style={[styles.packageDescription, { color: theme.colors.onSurfaceVariant }]}>
-                        {getPackageDescription(packageItem)}
-                        {savings && (
-                          <Text style={[styles.packageSavings, { color: theme.colors.primary }]}>
-                            {savings}
-                          </Text>
-                        )}
-                      </Text>
-                    </View>
-                    <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>
-                      {formatPrice(packageItem)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             ) : (
               <View style={styles.noPackagesContainer}>
