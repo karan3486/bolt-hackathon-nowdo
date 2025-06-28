@@ -5,7 +5,8 @@ import Purchases, {
   PurchasesOffering, 
   PurchasesPackage,
   PurchasesEntitlementInfo,
-  PURCHASES_ERROR_CODE
+  PURCHASES_ERROR_CODE,
+  LOG_LEVEL
 } from 'react-native-purchases';
 
 interface RevenueCatState {
@@ -30,24 +31,53 @@ export function useRevenueCat() {
       return;
     }
 
+    // Enable debug logging for troubleshooting
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    
     loadInitialData();
   }, []);
 
   const loadInitialData = async () => {
+    console.log('RevenueCat: Loading initial data...');
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
+      
+      // Check if RevenueCat is configured
+      const isConfigured = await Purchases.isConfigured();
+      console.log('RevenueCat configured:', isConfigured);
+      
+      if (!isConfigured) {
+        throw new Error('RevenueCat is not configured. Please check your API keys.');
+      }
       
       const [customerInfo, offerings] = await Promise.all([
         Purchases.getCustomerInfo(),
         Purchases.getOfferings(),
       ]);
 
+      console.log('RevenueCat: Customer info loaded:', customerInfo);
+      console.log('RevenueCat: Offerings loaded:', offerings);
+      
+      const offeringsArray = offerings.all ? Object.values(offerings.all) : [];
+      console.log('RevenueCat: Available offerings:', offeringsArray);
       setState(prev => ({
         ...prev,
         customerInfo,
-        offerings: offerings.all ? Object.values(offerings.all) : [],
+        offerings: offeringsArray,
         loading: false,
       }));
+      
+      // Log available packages for debugging
+      offeringsArray.forEach(offering => {
+        console.log(`Offering "${offering.identifier}" has ${offering.availablePackages.length} packages:`, 
+          offering.availablePackages.map(pkg => ({
+            identifier: pkg.identifier,
+            price: pkg.product.priceString,
+            title: pkg.product.title
+          }))
+        );
+      });
+      
     } catch (error) {
       console.error('RevenueCat initialization error:', error);
       setState(prev => ({
@@ -64,10 +94,14 @@ export function useRevenueCat() {
       throw new Error('Purchases not supported on web platform');
     }
 
+    console.log('RevenueCat: Attempting to purchase package:', packageToPurchase.identifier);
+    
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+      
+      console.log('RevenueCat: Purchase successful:', customerInfo);
       
       setState(prev => ({
         ...prev,
@@ -87,6 +121,10 @@ export function useRevenueCat() {
         errorMessage = 'Payment is pending';
       } else if (error.code === PURCHASES_ERROR_CODE.PRODUCT_NOT_AVAILABLE_FOR_PURCHASE) {
         errorMessage = 'Product not available for purchase';
+      } else if (error.code === PURCHASES_ERROR_CODE.STORE_PROBLEM) {
+        errorMessage = 'There was a problem with the App Store. Please try again later.';
+      } else if (error.code === PURCHASES_ERROR_CODE.NETWORK_ERROR) {
+        errorMessage = 'Network error. Please check your internet connection.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -107,10 +145,14 @@ export function useRevenueCat() {
       throw new Error('Restore not supported on web platform');
     }
 
+    console.log('RevenueCat: Attempting to restore purchases...');
+    
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       const customerInfo = await Purchases.restorePurchases();
+      
+      console.log('RevenueCat: Restore successful:', customerInfo);
       
       setState(prev => ({
         ...prev,
@@ -138,27 +180,36 @@ export function useRevenueCat() {
     if (!state.customerInfo) return false;
     
     const entitlement = state.customerInfo.entitlements.active[entitlementId];
-    return entitlement?.isActive === true;
+    const isActive = entitlement?.isActive === true;
+    console.log(`RevenueCat: Checking entitlement "${entitlementId}":`, isActive);
+    return isActive;
   }, [state.customerInfo]);
 
   // Get all active entitlements
   const getActiveEntitlements = useCallback((): PurchasesEntitlementInfo[] => {
     if (!state.customerInfo) return [];
     
-    return Object.values(state.customerInfo.entitlements.active);
+    const activeEntitlements = Object.values(state.customerInfo.entitlements.active);
+    console.log('RevenueCat: Active entitlements:', activeEntitlements);
+    return activeEntitlements;
   }, [state.customerInfo]);
 
   // Check if user is subscribed to any product
   const isSubscribed = useCallback((): boolean => {
-    return getActiveEntitlements().length > 0;
+    const subscribed = getActiveEntitlements().length > 0;
+    console.log('RevenueCat: Is subscribed:', subscribed);
+    return subscribed;
   }, [getActiveEntitlements]);
 
   // Identify user (call this after user authentication)
   const identifyUser = useCallback(async (userId: string) => {
     if (Platform.OS === 'web') return;
 
+    console.log('RevenueCat: Identifying user:', userId);
+    
     try {
       const { customerInfo } = await Purchases.logIn(userId);
+      console.log('RevenueCat: User identified successfully:', customerInfo);
       setState(prev => ({ ...prev, customerInfo }));
       return customerInfo;
     } catch (error) {
@@ -171,8 +222,11 @@ export function useRevenueCat() {
   const logOutUser = useCallback(async () => {
     if (Platform.OS === 'web') return;
 
+    console.log('RevenueCat: Logging out user...');
+    
     try {
       const { customerInfo } = await Purchases.logOut();
+      console.log('RevenueCat: User logged out successfully:', customerInfo);
       setState(prev => ({ ...prev, customerInfo }));
       return customerInfo;
     } catch (error) {

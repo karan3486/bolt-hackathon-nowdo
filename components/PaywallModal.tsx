@@ -23,7 +23,7 @@ interface PaywallModalProps {
 
 export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: PaywallModalProps) {
   const theme = useTheme();
-  const { offerings, purchasePackage, restorePurchases, loading } = useRevenueCat();
+  const { offerings, purchasePackage, restorePurchases, loading, error } = useRevenueCat();
   const [purchasing, setPurchasing] = useState(false);
 
   if (Platform.OS === 'web') {
@@ -31,8 +31,12 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
       <Modal visible={visible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.webNotSupported, { backgroundColor: theme.colors.surface }]}>
+            <Crown size={64} color={theme.colors.primary} />
             <Text style={[styles.webNotSupportedText, { color: theme.colors.onSurface }]}>
-              Subscriptions are not supported on web. Please use the mobile app to subscribe.
+              Premium Features Available
+            </Text>
+            <Text style={[styles.webNotSupportedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+              Subscriptions are not supported on web platform. Please use the mobile app to access premium features and manage your subscription.
             </Text>
             <TouchableOpacity
               style={[styles.closeButton, { backgroundColor: theme.colors.primary }]}
@@ -48,16 +52,32 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
     );
   }
 
-  const currentOffering = offerings?.[0]; // Get the first offering
+  // Get the current offering - RevenueCat typically has a "default" offering
+  const currentOffering = offerings?.find(offering => offering.identifier === 'default') || offerings?.[0];
   const packages = currentOffering?.availablePackages || [];
 
+  // Debug logging for troubleshooting
+  React.useEffect(() => {
+    if (visible) {
+      console.log('PaywallModal opened');
+      console.log('Offerings:', offerings);
+      console.log('Current offering:', currentOffering);
+      console.log('Available packages:', packages);
+      console.log('Loading:', loading);
+      console.log('Error:', error);
+    }
+  }, [visible, offerings, currentOffering, packages, loading, error]);
   const handlePurchase = async (packageToPurchase: PurchasesPackage) => {
+    console.log('Attempting to purchase package:', packageToPurchase.identifier);
     setPurchasing(true);
     try {
-      await purchasePackage(packageToPurchase);
+      const customerInfo = await purchasePackage(packageToPurchase);
+      console.log('Purchase successful:', customerInfo);
       onPurchaseSuccess?.();
       onClose();
+      Alert.alert('Success!', 'Welcome to Premium! Enjoy all the premium features.');
     } catch (error) {
+      console.error('Purchase failed:', error);
       Alert.alert('Purchase Failed', error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
       setPurchasing(false);
@@ -65,10 +85,14 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
   };
 
   const handleRestore = async () => {
+    console.log('Attempting to restore purchases');
     try {
-      await restorePurchases();
+      const customerInfo = await restorePurchases();
+      console.log('Restore successful:', customerInfo);
       Alert.alert('Restore Complete', 'Your purchases have been restored successfully.');
+      onClose();
     } catch (error) {
+      console.error('Restore failed:', error);
       Alert.alert('Restore Failed', error instanceof Error ? error.message : 'Failed to restore purchases');
     }
   };
@@ -94,6 +118,13 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
     return 'One-time purchase';
   };
 
+  const getPackageSavings = (packageItem: PurchasesPackage): string | null => {
+    const { identifier } = packageItem;
+    if (identifier.includes('annual') || identifier.includes('yearly')) {
+      return 'Save 50%';
+    }
+    return null;
+  };
   const premiumFeatures = [
     { icon: Crown, title: 'Unlimited Tasks', description: 'Create unlimited tasks and projects' },
     { icon: Star, title: 'Advanced Analytics', description: 'Detailed productivity insights and reports' },
@@ -156,23 +187,48 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
                   Loading subscription options...
                 </Text>
               </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                  Unable to load subscription options. Please try again later.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => window.location.reload()}
+                >
+                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
+                    Retry
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : packages.length > 0 ? (
               <View style={styles.packagesSection}>
                 <Text style={[styles.packagesTitle, { color: theme.colors.onSurface }]}>
                   Choose Your Plan
                 </Text>
                 {packages.map((packageItem, index) => (
+                  const savings = getPackageSavings(packageItem);
+                  const isPopular = packageItem.identifier.includes('annual') || packageItem.identifier.includes('yearly');
+                  
                   <TouchableOpacity
                     key={packageItem.identifier}
                     style={[
                       styles.packageItem,
-                      {
-                        backgroundColor: theme.colors.background,
+                          backgroundColor: isPopular ? theme.colors.primary + '10' : theme.colors.background,
+                          borderColor: isPopular ? theme.colors.primary : theme.colors.outline,
+                          borderWidth: isPopular ? 2 : 1,
                         borderColor: theme.colors.outline,
                       }
                     ]}
                     onPress={() => handlePurchase(packageItem)}
                     disabled={purchasing}
+                      {isPopular && (
+                        <View style={[styles.popularBadge, { backgroundColor: theme.colors.primary }]}>
+                          <Text style={[styles.popularBadgeText, { color: theme.colors.onPrimary }]}>
+                            Most Popular
+                          </Text>
+                        </View>
+                      )}
                   >
                     <View style={styles.packageContent}>
                       <Text style={[styles.packageTitle, { color: theme.colors.onSurface }]}>
@@ -180,6 +236,11 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
                       </Text>
                       <Text style={[styles.packageDescription, { color: theme.colors.onSurfaceVariant }]}>
                         {getPackageDescription(packageItem)}
+                        {savings && (
+                          <Text style={[styles.packageSavings, { color: theme.colors.primary }]}>
+                            {savings}
+                          </Text>
+                        )}
                       </Text>
                     </View>
                     <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>
@@ -191,8 +252,16 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
             ) : (
               <View style={styles.noPackagesContainer}>
                 <Text style={[styles.noPackagesText, { color: theme.colors.onSurfaceVariant }]}>
-                  No subscription options available at the moment.
+                  No subscription options available at the moment. Please check your internet connection and try again.
                 </Text>
+                <TouchableOpacity
+                  style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => window.location.reload()}
+                >
+                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
+                    Retry
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -316,6 +385,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   packagesSection: {
     paddingVertical: 20,
   },
@@ -331,9 +418,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
     marginBottom: 12,
     elevation: 2,
+    position: 'relative',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -8,
+    left: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  popularBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   packageContent: {
     flex: 1,
@@ -346,6 +446,11 @@ const styles = StyleSheet.create({
   packageDescription: {
     fontSize: 14,
   },
+  packageSavings: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
   packagePrice: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -357,6 +462,7 @@ const styles = StyleSheet.create({
   noPackagesText: {
     fontSize: 16,
     textAlign: 'center',
+    marginBottom: 16,
   },
   restoreButton: {
     paddingVertical: 16,
@@ -398,9 +504,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   webNotSupportedText: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  webNotSupportedSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
     lineHeight: 24,
   },
   closeButton: {

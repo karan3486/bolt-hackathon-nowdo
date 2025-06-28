@@ -26,12 +26,12 @@ const configureRevenueCat = async () => {
     if (Platform.OS === 'ios') {
       // Replace with your iOS API key from RevenueCat dashboard
       await Purchases.configure({
-        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || 'your_ios_api_key_here',
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || 'appl_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
       });
     } else if (Platform.OS === 'android') {
       // Replace with your Android API key from RevenueCat dashboard
       await Purchases.configure({
-        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || 'your_android_api_key_here',
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || 'goog_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
       });
     } else {
       // Web platform - RevenueCat doesn't support web
@@ -39,7 +39,12 @@ const configureRevenueCat = async () => {
       return;
     }
 
-    console.log('RevenueCat configured successfully');
+    console.log('RevenueCat configured successfully for platform:', Platform.OS);
+    
+    // Verify configuration
+    const isConfigured = await Purchases.isConfigured();
+    console.log('RevenueCat configuration verified:', isConfigured);
+    
   } catch (error) {
     console.error('RevenueCat configuration error:', error);
   }
