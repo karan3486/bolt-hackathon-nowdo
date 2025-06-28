@@ -63,6 +63,7 @@ export default function SubscriptionScreen() {
   };
 
   const handleSubscribe = () => {
+    console.log('Opening paywall modal');
     setShowPaywall(true);
   };
 

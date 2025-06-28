@@ -53,7 +53,7 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
   }
 
   // Get the current offering - RevenueCat typically has a "default" offering
-  const currentOffering = offerings?.find(offering => offering.identifier === 'default') || offerings?.[0];
+  const currentOffering = offerings?.[0]; // Use the first available offering
   const packages = currentOffering?.availablePackages || [];
 
   // Debug logging for troubleshooting
@@ -61,10 +61,23 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
     if (visible) {
       console.log('PaywallModal opened');
       console.log('Offerings:', offerings);
+      console.log('Offerings length:', offerings?.length);
       console.log('Current offering:', currentOffering);
+      console.log('Current offering identifier:', currentOffering?.identifier);
       console.log('Available packages:', packages);
+      console.log('Packages length:', packages.length);
       console.log('Loading:', loading);
       console.log('Error:', error);
+      
+      // Log each package details
+      packages.forEach((pkg, index) => {
+        console.log(`Package ${index}:`, {
+          identifier: pkg.identifier,
+          price: pkg.product.priceString,
+          title: pkg.product.title,
+          description: pkg.product.description
+        });
+      });
     }
   }, [visible, offerings, currentOffering, packages, loading, error]);
   const handlePurchase = async (packageToPurchase: PurchasesPackage) => {

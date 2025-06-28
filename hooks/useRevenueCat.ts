@@ -57,8 +57,18 @@ export function useRevenueCat() {
 
       console.log('RevenueCat: Customer info loaded:', customerInfo);
       console.log('RevenueCat: Offerings loaded:', offerings);
+      console.log('RevenueCat: Current offering:', offerings.current);
       
-      const offeringsArray = offerings.all ? Object.values(offerings.all) : [];
+      // Try to get the current offering first, then fall back to all offerings
+      let offeringsArray: PurchasesOffering[] = [];
+      if (offerings.current) {
+        offeringsArray = [offerings.current];
+        console.log('RevenueCat: Using current offering:', offerings.current.identifier);
+      } else if (offerings.all) {
+        offeringsArray = Object.values(offerings.all);
+        console.log('RevenueCat: Using all offerings:', Object.keys(offerings.all));
+      }
+      
       console.log('RevenueCat: Available offerings:', offeringsArray);
       setState(prev => ({
         ...prev,

@@ -26,12 +26,12 @@ const configureRevenueCat = async () => {
     if (Platform.OS === 'ios') {
       // Replace with your iOS API key from RevenueCat dashboard
       await Purchases.configure({
-        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || 'appl_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || 'sk_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
       });
     } else if (Platform.OS === 'android') {
       // Replace with your Android API key from RevenueCat dashboard
       await Purchases.configure({
-        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || 'goog_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || 'sk_ZAaAuVngjbpbshRuJlHeXvvFTPqGG',
       });
     } else {
       // Web platform - RevenueCat doesn't support web
@@ -44,6 +44,26 @@ const configureRevenueCat = async () => {
     // Verify configuration
     const isConfigured = await Purchases.isConfigured();
     console.log('RevenueCat configuration verified:', isConfigured);
+    
+    // Get initial customer info and offerings
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const offerings = await Purchases.getOfferings();
+      console.log('RevenueCat: Initial customer info:', customerInfo);
+      console.log('RevenueCat: Initial offerings:', offerings);
+      
+      // Log available offerings for debugging
+      if (offerings.all) {
+        Object.values(offerings.all).forEach(offering => {
+          console.log(`Offering "${offering.identifier}" has ${offering.availablePackages.length} packages`);
+          offering.availablePackages.forEach(pkg => {
+            console.log(`  - Package: ${pkg.identifier}, Price: ${pkg.product.priceString}`);
+          });
+        });
+      }
+    } catch (error) {
+      console.error('RevenueCat: Error fetching initial data:', error);
+    }
     
   } catch (error) {
     console.error('RevenueCat configuration error:', error);
