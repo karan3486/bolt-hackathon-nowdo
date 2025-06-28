@@ -11,7 +11,6 @@ import {
 import { useTheme } from 'react-native-paper';
 import { useUserData } from '../hooks/useUserData';
 import { useAuthMessages } from '../hooks/useAuthMessages';
-import LoadingOverlay from './LoadingOverlay';
 import ConfirmationDialog from './ConfirmationDialog';
 import { Database, Trash2, Download, Upload, TriangleAlert as AlertTriangle, X, ChartBar as BarChart3, Calendar, Target, Clock, CircleCheck as CheckCircle } from 'lucide-react-native';
 
@@ -309,11 +308,6 @@ export default function DataManagementModal({ visible, onClose }: DataManagement
         type="danger"
       />
 
-      {/* Loading Overlay */}
-      <LoadingOverlay
-        visible={isClearing || loading}
-        message={isClearing ? "Clearing your data..." : "Loading..."}
-      />
     </>
   );
 }

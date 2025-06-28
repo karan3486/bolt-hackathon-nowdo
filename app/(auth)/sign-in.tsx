@@ -17,7 +17,6 @@ import { Eye, EyeOff, Mail, Lock, Chrome, Facebook, Apple } from 'lucide-react-n
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import AuthMessage from '../../components/AuthMessage';
-import LoadingOverlay from '../../components/LoadingOverlay';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 const { width, height } = Dimensions.get('window');
@@ -279,10 +278,6 @@ export default function SignInScreen() {
         />
       )}
       
-      <LoadingOverlay 
-        visible={isLoading} 
-        message="Signing you in..." 
-      />
     </SafeAreaView>
   );
 }

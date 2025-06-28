@@ -16,7 +16,6 @@ import { Mail, ArrowLeft, Send } from 'lucide-react-native';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import AuthMessage from '../../components/AuthMessage';
-import LoadingOverlay from '../../components/LoadingOverlay';
 
 export default function ForgotPasswordScreen() {
   const { resetPassword } = useAuth();
@@ -192,10 +191,6 @@ export default function ForgotPasswordScreen() {
         />
       )}
       
-      <LoadingOverlay 
-        visible={isLoading} 
-        message="Sending reset link..." 
-      />
     </SafeAreaView>
   );
 }

@@ -21,7 +21,6 @@ import { useUserData } from '../../hooks/useUserData';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import { useAuth } from '../../hooks/useAuth';
 import AuthMessage from '../../components/AuthMessage';
-import LoadingOverlay from '../../components/LoadingOverlay';
 import DateOfBirthPicker from '../../components/DateOfBirthPicker';
 import { ArrowLeft, Camera, CreditCard as Edit3, Save, X, User, Mail, Phone, MapPin, Briefcase, Calendar, Upload, Trash2 } from 'lucide-react-native';
 
@@ -339,11 +338,6 @@ export default function ProfileScreen() {
   }, [errors]);
 
   // Show loading state while checking authentication
-  if (loading && !user) {
-    return (
-      <LoadingOverlay visible={true} message="Loading profile..." />
-    );
-  }
 
   // Memoized input components to prevent unnecessary re-renders
   const renderInputField = useCallback((
@@ -641,7 +635,6 @@ export default function ProfileScreen() {
           onDismiss={clearMessage}
         />
       )}
-      
     </SafeAreaView>
   );
 }

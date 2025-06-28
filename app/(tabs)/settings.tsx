@@ -42,7 +42,6 @@ import { useAuthMessages } from '../../hooks/useAuthMessages';
 import { setThemeMode } from '../../store/slices/themeSlice';
 import { RootState } from '../../store';
 import AuthMessage from '../../components/AuthMessage';
-import LoadingOverlay from '../../components/LoadingOverlay';
 import DataManagementModal from '../../components/DataManagementModal';
 import { supabase } from '../../lib/supabase';
 
@@ -585,7 +584,6 @@ export default function SettingsScreen() {
         />
       )}
 
-      
     </SafeAreaView>
   );
 }
