@@ -377,27 +377,34 @@ export class DatabaseService {
   }
 
   static async createUserPreferences(userId: string, preferences?: Partial<UserPreferences>) {
-    const { data, error } = await supabase
-      .from('user_preferences')
-      .insert({
-        user_id: userId,
-        theme: preferences?.theme || 'system',
-        notifications_enabled: preferences?.notificationsEnabled ?? true,
-        work_duration: preferences?.pomodoroSettings?.workDuration || 25,
-        short_break_duration: preferences?.pomodoroSettings?.shortBreakDuration || 5,
-        long_break_duration: preferences?.pomodoroSettings?.longBreakDuration || 15,
-        sessions_until_long_break: preferences?.pomodoroSettings?.sessionsUntilLongBreak || 4,
-        first_launch: preferences?.firstLaunch ?? true,
-      })
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          theme: preferences?.theme || 'system',
+          notifications_enabled: preferences?.notificationsEnabled ?? true,
+          work_duration: preferences?.pomodoroSettings?.workDuration || 25,
+          short_break_duration: preferences?.pomodoroSettings?.shortBreakDuration || 5,
+          long_break_duration: preferences?.pomodoroSettings?.longBreakDuration || 15,
+          sessions_until_long_break: preferences?.pomodoroSettings?.sessionsUntilLongBreak || 4,
+          first_launch: preferences?.firstLaunch ?? true,
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating user preferences:', error);
-      throw new Error(`Failed to create user preferences: ${error.message}`);
+      if (error) {
+        console.error('Error creating user preferences:', error);
+        throw new Error(`Failed to create user preferences: ${error.message}`);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Database error in createUserPreferences:', error);
+      throw new Error(`Database error: ${error.message}`);
     }
-
-    return data;
   }
 
   static async updateUserPreferences(userId: string, updates: Partial<UserPreferences>) {
@@ -441,35 +448,28 @@ export class DatabaseService {
   }
 
   static async createUserProfile(userId: string, profile: Partial<UserProfile>) {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          user_id: userId,
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
-          profile_picture_url: profile.profilePictureUrl,
-          phone_number: profile.phoneNumber,
-          date_of_birth: profile.dateOfBirth,
-          location: profile.location,
-          profession: profile.profession,
-        }, {
-          onConflict: 'user_id'
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .insert({
+        user_id: userId,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        email: profile.email,
+        profile_picture_url: profile.profilePictureUrl,
+        phone_number: profile.phoneNumber,
+        date_of_birth: profile.dateOfBirth,
+        location: profile.location,
+        profession: profile.profession,
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating user profile:', error);
-        throw new Error(`Failed to create user profile: ${error.message}`);
-      }
-
-      return data;
-    } catch (error: any) {
-      console.error('Database error in createUserProfile:', error);
-      throw new Error(`Database error: ${error.message}`);
+    if (error) {
+      console.error('Error creating user profile:', error);
+      throw new Error(`Failed to create user profile: ${error.message}`);
     }
+
+    return data;
   }
 
   static async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
