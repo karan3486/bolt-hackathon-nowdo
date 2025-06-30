@@ -10,6 +10,8 @@ import {
   Platform,
   Alert,
   Dimensions,
+  Image,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
@@ -32,6 +34,10 @@ export default function SignInScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBoltBadgePress = () => {
+    Linking.openURL('https://bolt.new/');
+  };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -278,6 +284,19 @@ export default function SignInScreen() {
         />
       )}
       
+      {/* Bolt.new Badge */}
+      <TouchableOpacity
+        style={styles.boltBadge}
+        onPress={handleBoltBadgePress}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/black_circle_360x360/black_circle_360x360.png' }}
+          style={styles.boltBadgeImage}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+      
     </SafeAreaView>
   );
 }
@@ -500,5 +519,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6750A4',
     fontWeight: '600',
+  },
+  boltBadge: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 1000,
+  },
+  boltBadgeImage: {
+    width: 40,
+    height: 40,
   },
 });

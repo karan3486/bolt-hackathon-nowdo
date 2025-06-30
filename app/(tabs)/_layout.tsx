@@ -140,43 +140,6 @@ export default function TabsLayout() {
         visible={showMoreMenu} 
         onClose={() => setShowMoreMenu(false)} 
       />
-
-      {/* Bolt.new Badge */}
-      <TouchableOpacity
-        style={styles.boltBadge}
-        onPress={handleBoltBadgePress}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/black_circle_360x360/black_circle_360x360.png' }}
-          style={styles.boltBadgeImage}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  boltBadge: {
-    position: 'absolute',
-    bottom: 100, // Above the tab bar
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1000,
-  },
-  boltBadgeImage: {
-    width: 50,
-    height: 50,
-  },
-});

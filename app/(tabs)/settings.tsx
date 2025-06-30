@@ -8,6 +8,8 @@ import {
   Switch,
   Alert,
   Platform,
+  Image,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
@@ -86,6 +88,10 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [showDataModal, setShowDataModal] = useState(false);
   const currentTheme = useSelector((state: RootState) => state.theme.mode);
+
+  const handleBoltBadgePress = () => {
+    Linking.openURL('https://bolt.new/');
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -567,6 +573,25 @@ export default function SettingsScreen() {
           <Text style={[styles.appInfoText, { color: theme.colors.onSurfaceVariant }]}>
             Made with ❤️ for productivity
           </Text>
+          
+          {/* Made with Bolt Badge */}
+          <TouchableOpacity
+            style={styles.madeWithBolt}
+            onPress={handleBoltBadgePress}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.madeWithBoltText, { color: theme.colors.onSurfaceVariant }]}>
+              Made with
+            </Text>
+            <Image
+              source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/black_circle_360x360/black_circle_360x360.png' }}
+              style={styles.boltBadgeSmall}
+              resizeMode="contain"
+            />
+            <Text style={[styles.madeWithBoltText, { color: theme.colors.onSurfaceVariant }]}>
+              for Productivity
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -707,5 +732,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 4,
     textAlign: 'center',
+  },
+  madeWithBolt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  madeWithBoltText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginHorizontal: 4,
+  },
+  boltBadgeSmall: {
+    width: 20,
+    height: 20,
+    marginHorizontal: 4,
   },
 });
