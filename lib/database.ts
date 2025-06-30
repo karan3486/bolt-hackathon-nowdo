@@ -492,17 +492,20 @@ export class DatabaseService {
     return data;
   }
 
-  static async uploadProfilePicture(userId: string, file: File) {
+  static async uploadProfilePicture(userId: string, file: File | any) {
     console.log('DatabaseService.uploadProfilePicture - User ID:', userId);
     console.log('DatabaseService.uploadProfilePicture - File:', file.name, file.size, file.type);
     
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${userId}-${Math.random()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
+  
+    // Handle both regular File objects and custom file objects with blob data
+    const fileData = file._blob ? file._blob : file;
 
     const { error: uploadError } = await supabase.storage
       .from('profile-pictures')
-      .upload(filePath, file);
+      .upload(filePath, fileData);
 
     if (uploadError) {
       console.error('Supabase storage upload error:', uploadError);

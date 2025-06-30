@@ -128,15 +128,13 @@ export default function SignInScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logo}>
-                <Text style={styles.logoText}>ND</Text>
-              </View>
-            </View>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>
-              Sign in to continue your productivity journey
-            </Text>
+            <Image 
+              source={require('../../assets/images/icon.png')} 
+              style={styles.appIcon} 
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Welcome Back!</Text>
+            <Text style={styles.headerSubtitle}>Sign in to your account</Text>
           </View>
 
           {/* Form */}
@@ -229,21 +227,21 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.divider}>
+            {/* <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>or continue with</Text>
               <View style={styles.dividerLine} />
-            </View>
+            </View> */}
 
             {/* Social Sign In */}
-            <GoogleSignInButton
+            {/* <GoogleSignInButton
               onPress={() => handleSocialSignIn('Google')}
               loading={isLoading}
               disabled={isLoading}
               text="Sign in with Google"
-            />
+            /> */}
 
-            <View style={styles.socialContainer}>
+            {/* <View style={styles.socialContainer}>
               <TouchableOpacity
                 style={styles.socialButton}
                 onPress={() => handleSocialSignIn('Facebook')}
@@ -261,7 +259,7 @@ export default function SignInScreen() {
                   <Text style={styles.socialButtonText}>Apple</Text>
                 </TouchableOpacity>
               )}
-            </View>
+            </View> */}
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
@@ -271,6 +269,18 @@ export default function SignInScreen() {
                   <Text style={styles.signUpLink}>Sign Up</Text>
                 </TouchableOpacity>
               </Link>
+            </View>
+            
+            {/* Built with bolt caption */}
+            <View style={styles.builtWithBoltContainer}>
+              <Text style={styles.builtWithBoltText}>Built with Bolt.new</Text>
+              <TouchableOpacity onPress={handleBoltBadgePress} style={styles.boltBadgeButton}>
+                <Image
+                  source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/black_circle_360x360/black_circle_360x360.png' }}
+                  style={styles.inlineBoltImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -285,7 +295,7 @@ export default function SignInScreen() {
       )}
       
       {/* Bolt.new Badge */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.boltBadge}
         onPress={handleBoltBadgePress}
         activeOpacity={0.8}
@@ -295,7 +305,7 @@ export default function SignInScreen() {
           style={styles.boltBadgeImage}
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       
     </SafeAreaView>
   );
@@ -315,39 +325,23 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   header: {
+    marginBottom: 32,
     alignItems: 'center',
-    marginBottom: 40,
-    paddingTop: 20,
   },
-  logoContainer: {
-    marginBottom: 24,
-  },
-  logo: {
+  appIcon: {
     width: 80,
     height: 80,
-    borderRadius: 20,
-    backgroundColor: '#6750A4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#6750A4',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: 16,
+    borderRadius: 15,
   },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  title: {
+  headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 8,
     textAlign: 'center',
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
@@ -538,6 +532,25 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   boltBadgeImage: {
+    width: 40,
+    height: 40,
+  },
+  builtWithBoltContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  builtWithBoltText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  boltBadgeButton: {
+    padding: 4,
+  },
+  inlineBoltImage: {
     width: 40,
     height: 40,
   },

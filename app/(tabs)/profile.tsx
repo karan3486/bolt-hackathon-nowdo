@@ -178,63 +178,85 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (!user) {
+        // Debug user authentication state
+        console.log('Image upload - User auth state:', !!user);
+        console.log('Image upload - User ID:', user?.id);
+        
+        // The user should be authenticated at this point since we're in a tab that requires auth
+        // but we'll keep the check for safety
+        if (!user?.id) {
           showError('You must be logged in to upload a profile picture.');
           return;
         }
-
+        
         const asset = result.assets[0];
         
-        // Create a File-like object for mobile
-        const response = await fetch(asset.uri);
-        const blob = await response.blob();
+        console.log('Selected image asset:', asset.uri);
         
-        // Determine proper MIME type
-        let mimeType = asset.type || getMimeTypeFromExtension(asset.uri);
-        
-        // Handle the case where iOS returns just "image"
-        if (mimeType === 'image') {
-          mimeType = getMimeTypeFromExtension(asset.uri);
-        }
-        
-        // Validate MIME type
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        if (!allowedTypes.includes(mimeType)) {
-          showError('Please select a JPG, PNG, WEBP, or GIF image');
-          return;
-        }
-        
-        // Create a file with proper extension and MIME type
-        const fileExtension = asset.uri.split('.').pop() || 'jpg';
-        const fileName = `profile-${Date.now()}.${fileExtension}`;
-        
-        // Create a proper File object with correct MIME type
-        const file = new File([blob], fileName, {
-          type: mimeType,
-        });
-
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          showError('Image size must be less than 5MB');
-          return;
-        }
-
-        console.log('Uploading file:', {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          originalType: asset.type,
-          detectedType: mimeType
-        });
-
-        setIsUploading(true);
         try {
-          await uploadProfilePicture(file);
-          showSuccess('Profile picture updated successfully!');
+          // Determine proper MIME type
+          let mimeType = asset.type || getMimeTypeFromExtension(asset.uri);
+          
+          // Handle the case where iOS returns just "image"
+          if (mimeType === 'image') {
+            mimeType = getMimeTypeFromExtension(asset.uri);
+          }
+          
+          // Validate MIME type
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+          if (!allowedTypes.includes(mimeType)) {
+            showError('Please select a JPG, PNG, WEBP, or GIF image');
+            return;
+          }
+          
+          // Create a file with proper extension and MIME type
+          const fileExtension = asset.uri.split('.').pop() || 'jpg';
+          const fileName = `profile-${Date.now()}.${fileExtension}`;
+          
+          // For mobile, we'll directly pass the asset URI to a custom upload function
+          // that handles the file blob creation server-side
+          setIsUploading(true);
+          
+          // Get the blob data
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          
+          // Create a custom object with the necessary properties
+          const fileData = {
+            uri: asset.uri,
+            name: fileName,
+            type: mimeType,
+            size: blob.size,
+            _blob: blob  // Keep the blob for upload
+          };
+
+          // Validate file size (5MB)
+          if (blob.size > 5 * 1024 * 1024) {
+            showError('Image size must be less than 5MB');
+            setIsUploading(false);
+            return;
+          }
+
+          console.log('Uploading file:', {
+            name: fileName,
+            size: blob.size,
+            type: mimeType,
+            originalType: asset.type,
+            detectedType: mimeType
+          });
+
+          try {
+            await uploadProfilePicture(fileData);
+            showSuccess('Profile picture updated successfully!');
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            showError('Failed to upload image. Please try again.');
+          } finally {
+            setIsUploading(false);
+          }
         } catch (error) {
-          console.error('Error uploading image:', error);
-          showError('Failed to upload image. Please try again.');
-        } finally {
+          console.error('Error processing image:', error);
+          showError('Failed to process image. Please try again.');
           setIsUploading(false);
         }
       }

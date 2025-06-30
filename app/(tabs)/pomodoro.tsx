@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Button, useTheme, Portal, Modal, TextInput } from 'react-native-paper';
@@ -30,6 +32,12 @@ export default function PomodoroScreen() {
   const dispatch = useDispatch();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Animation values
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const timeScaleAnim = useRef(new Animated.Value(1)).current;
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  
   const { 
     isRunning, 
     timeRemaining, 
@@ -42,6 +50,104 @@ export default function PomodoroScreen() {
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
 
+  // Start animations when timer is running
+  useEffect(() => {
+    let pulseAnimation: Animated.CompositeAnimation;
+    let rotateAnimation: Animated.CompositeAnimation;
+    let timeAnimation: Animated.CompositeAnimation;
+    let waveAnimation: Animated.CompositeAnimation;
+    
+    if (isRunning) {
+      // Pulse animation
+      pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      // Rotation animation
+      rotateAnimation = Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 10000,
+          easing: Easing.linear,
+          useNativeDriver: true
+        })
+      );
+      
+      // Time scale animation
+      timeAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(timeScaleAnim, {
+            toValue: 1.03,
+            duration: 500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(timeScaleAnim, {
+            toValue: 1,
+            duration: 500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      // Wave animation
+      waveAnimation = Animated.loop(
+        Animated.timing(waveAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.linear,
+          useNativeDriver: true
+        })
+      );
+      
+      pulseAnimation.start();
+      rotateAnimation.start();
+      timeAnimation.start();
+      waveAnimation.start();
+    } else {
+      // Reset animations when not running
+      Animated.parallel([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(timeScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(waveAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true
+        })
+      ]).start();
+    }
+    
+    return () => {
+      pulseAnimation?.stop();
+      rotateAnimation?.stop();
+      timeAnimation?.stop();
+      waveAnimation?.stop();
+    };
+  }, [isRunning, pulseAnim, rotateAnim, timeScaleAnim, waveAnim]);
+
+  // Timer countdown effect
   useEffect(() => {
     if (isRunning && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {
@@ -147,36 +253,83 @@ export default function PomodoroScreen() {
         </Text>
       </View>
 
-      {/* Timer Circle */}
+      {/* Timer Circle with Animations */}
       <View style={styles.timerContainer}>
-        <View 
+        <Animated.View 
           style={[
             styles.timerCircle,
             { 
               borderColor: getSessionTypeColor(),
               width: TIMER_SIZE,
               height: TIMER_SIZE,
+              transform: [
+                { scale: pulseAnim }
+              ]
             }
           ]}
         >
-          <View style={[styles.progressRing, { transform: [{ rotate: `${getProgress() * 360}deg` }] }]}>
+          {/* Animated progress ring */}
+          <Animated.View 
+            style={[
+              styles.progressRing, 
+              { 
+                transform: [
+                  { rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [`${getProgress() * 360}deg`, `${getProgress() * 360 + 10}deg`]
+                    }) 
+                  }
+                ] 
+              }
+            ]}
+          >
             <View 
               style={[
                 styles.progressFill,
                 { backgroundColor: getSessionTypeColor() }
               ]} 
             />
-          </View>
+          </Animated.View>
           
+          {/* Timer content with animations */}
           <View style={styles.timerContent}>
-            <Text style={[styles.timeDisplay, { color: theme.colors.onBackground }]}>
+            <Animated.Text 
+              style={[
+                styles.timeDisplay, 
+                { 
+                  color: theme.colors.onBackground,
+                  transform: [{ scale: timeScaleAnim }] 
+                }
+              ]}
+            >
               {formatTime(timeRemaining)}
-            </Text>
+            </Animated.Text>
             <Text style={[styles.timeLabel, { color: theme.colors.onSurfaceVariant }]}>
               {currentSessionType === 'work' ? 'Focus Time' : 'Break Time'}
             </Text>
           </View>
-        </View>
+          
+          {/* Wave animation at bottom of timer */}
+          {isRunning && (
+            <Animated.View 
+              style={[
+                styles.waveContainer,
+                {
+                  backgroundColor: getSessionTypeColor() + '40',
+                  transform: [
+                    { translateY: waveAnim.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [0, -10, 0]
+                      })
+                    }
+                  ]
+                }
+              ]}
+            >
+              <View style={[styles.wave, { backgroundColor: getSessionTypeColor() + '60' }]} />
+            </Animated.View>
+          )}
+        </Animated.View>
       </View>
 
       {/* Control Buttons */}
@@ -366,6 +519,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    overflow: 'hidden',
   },
   progressRing: {
     position: 'absolute',
@@ -382,6 +536,26 @@ const styles = StyleSheet.create({
   },
   timerContent: {
     alignItems: 'center',
+    zIndex: 10,
+  },
+  waveContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: TIMER_SIZE * 0.3,
+    borderBottomLeftRadius: TIMER_SIZE / 2,
+    borderBottomRightRadius: TIMER_SIZE / 2,
+    overflow: 'hidden',
+  },
+  wave: {
+    position: 'absolute',
+    top: 10,
+    left: -TIMER_SIZE * 0.2,
+    width: TIMER_SIZE * 1.4,
+    height: TIMER_SIZE * 0.3,
+    borderRadius: TIMER_SIZE / 4,
+    transform: [{ rotate: '-5deg' }],
   },
   timeDisplay: {
     fontSize: 48,

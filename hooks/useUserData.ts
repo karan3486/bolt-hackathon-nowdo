@@ -343,12 +343,13 @@ export function useUserData(options: UseUserDataOptions = {}) {
       throw error;
     }
   }, [user?.id]);
-
-  const uploadProfilePicture = useCallback(async (file: File) => {
+  
+  const uploadProfilePicture = useCallback(async (file: File | any) => {
     if (!user?.id) throw new Error('User not authenticated');
 
     console.log('Upload profile picture - User ID:', user.id);
     console.log('Upload profile picture - File:', file.name, file.size);
+    console.log('Upload profile picture - File type:', typeof file, file._blob ? 'Has blob data' : 'Standard file');
     
     setLoading(true);
     

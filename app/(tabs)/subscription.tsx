@@ -186,10 +186,11 @@ export default function SubscriptionScreen() {
           </Text>
           
           {[
-            { icon: Star, title: 'Unlimited Tasks', description: 'Create unlimited tasks and projects' },
-            { icon: Zap, title: 'Advanced Analytics', description: 'Detailed productivity insights' },
-            { icon: Shield, title: 'Priority Support', description: 'Get help when you need it' },
-            { icon: Check, title: 'Cloud Sync', description: 'Sync across all devices' },
+            { icon: Check, title: 'Unlimited Tasks', description: 'You can add unlimited tasks in a day.' },
+            { icon: Check, title: 'Infinite motivation scroll', description: 'Get unlimited AI generated motivation scrolling' },
+            { icon: Check, title: 'Add unlimited habits', description: 'You can add unlimited habits' },
+            { icon: Check, title: 'AI focus music access', description: 'You will get AI generated focus music' },
+            { icon: Check, title: 'Get AI habit suggestions', description: 'Special access to what\'s habits needed.' },
           ].map((feature, index) => {
             const IconComponent = feature.icon;
             const hasFeature = subscribed || hasActiveEntitlement('premium');
@@ -198,11 +199,11 @@ export default function SubscriptionScreen() {
               <View key={index} style={styles.featureItem}>
                 <View style={[
                   styles.featureIcon, 
-                  { backgroundColor: hasFeature ? '#4CAF50' + '15' : theme.colors.surfaceVariant }
+                  { backgroundColor: hasFeature ? '#8B5CF6' + '15' : theme.colors.surfaceVariant }
                 ]}>
                   <IconComponent 
                     size={20} 
-                    color={hasFeature ? '#4CAF50' : theme.colors.onSurfaceVariant} 
+                    color={hasFeature ? '#8B5CF6' : theme.colors.onSurfaceVariant} 
                   />
                 </View>
                 <View style={styles.featureContent}>
@@ -214,7 +215,7 @@ export default function SubscriptionScreen() {
                   </Text>
                 </View>
                 {hasFeature && (
-                  <Check size={16} color="#4CAF50" />
+                  <Check size={16} color="#8B5CF6" />
                 )}
               </View>
             );

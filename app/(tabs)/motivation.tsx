@@ -386,7 +386,8 @@ export default function MotivationScreen() {
       return Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
     },
     onPanResponderGrant: () => {
-      translateY.setOffset(translateY._value);
+      // Using extractOffset() instead of setOffset to avoid type errors
+      translateY.extractOffset();
     },
     onPanResponderMove: (_, gestureState) => {
       if (gestureState.dy < 0) {
@@ -491,7 +492,7 @@ export default function MotivationScreen() {
             ]}
           >
             <LinearGradient
-              colors={getCardGradient(currentCard.type)}
+              colors={getCardGradient(currentCard.type) as unknown as readonly [string, string, ...string[]]}
               style={styles.cardGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -502,11 +503,11 @@ export default function MotivationScreen() {
                   <Text style={styles.cardType}>
                     {currentCard.title}
                   </Text>
-                  {currentCard.isDefault && (
+                  {/* {currentCard.isDefault && (
                     <View style={styles.defaultBadge}>
                       <Text style={styles.defaultBadgeText}>Offline</Text>
                     </View>
-                  )}
+                  )} */}
                 </View>
                 <Text style={styles.cardEmoji}>
                   {currentCard.emoji}

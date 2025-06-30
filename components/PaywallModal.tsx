@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
+  Image
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { PurchasesPackage } from 'react-native-purchases';
@@ -134,15 +135,16 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
   const getPackageSavings = (packageItem: PurchasesPackage): string | null => {
     const { identifier } = packageItem;
     if (identifier.includes('annual') || identifier.includes('yearly')) {
-      return 'Save 50%';
+      return '15% OFF';
     }
     return null;
   };
   const premiumFeatures = [
-    { icon: Crown, title: 'Unlimited Tasks', description: 'Create unlimited tasks and projects' },
-    { icon: Star, title: 'Advanced Analytics', description: 'Detailed productivity insights and reports' },
-    { icon: Zap, title: 'Priority Support', description: 'Get help when you need it most' },
-    { icon: Check, title: 'Cloud Sync', description: 'Sync across all your devices' },
+    { icon: Check, title: 'Unlimited Tasks', description: 'You can add unlimited tasks in a day.' },
+    { icon: Check, title: 'Infinite motivation scroll', description: 'Get unlimited AI generated motivation scrolling' },
+    { icon: Check, title: 'Add unlimited habits.', description: 'You can add unlimited habits' },
+    { icon: Check, title: 'AI focus music access', description: 'You will get AI generated focus music' },
+    { icon: Check, title: 'Get AI habit suggestions.', description: 'Special access to what\'s habits needed.' },
   ];
 
   return (
@@ -159,14 +161,17 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Hero Section */}
             <View style={styles.heroSection}>
-              <View style={[styles.heroIcon, { backgroundColor: theme.colors.primary + '15' }]}>
-                <Crown size={48} color={theme.colors.primary} />
+              <View style={styles.heroIcon}>
+                <Image 
+                  source={require('../assets/images/icon.png')} 
+                  style={styles.appIcon} 
+                />
               </View>
               <Text style={[styles.heroTitle, { color: theme.colors.onSurface }]}>
-                Unlock Premium
+                Get NowDo Pro
               </Text>
               <Text style={[styles.heroSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                Get the most out of your productivity journey
+                Our most advanced features, for our most dedicated users.
               </Text>
             </View>
 
@@ -176,16 +181,12 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
                 const IconComponent = feature.icon;
                 return (
                   <View key={index} style={styles.featureItem}>
-                    <View style={[styles.featureIcon, { backgroundColor: theme.colors.primary + '15' }]}>
-                      <IconComponent size={20} color={theme.colors.primary} />
+                    <View style={[styles.featureIcon, { backgroundColor: '#8B5CF6' + '20' }]}>
+                      <IconComponent size={20} color="#8B5CF6" />
                     </View>
                     <View style={styles.featureContent}>
-                      <Text style={[styles.featureTitle, { color: theme.colors.onSurface }]}>
-                        {feature.title}
-                      </Text>
-                      <Text style={[styles.featureDescription, { color: theme.colors.onSurfaceVariant }]}>
-                        {feature.description}
-                      </Text>
+                      <Text style={[styles.featureTitle, { color: theme.colors.onSurface }]}>{feature.title}</Text>
+                      <Text style={[styles.featureDescription, { color: theme.colors.onSurfaceVariant }]}>{feature.description}</Text>
                     </View>
                   </View>
                 );
@@ -196,115 +197,69 @@ export default function PaywallModal({ visible, onClose, onPurchaseSuccess }: Pa
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-                  Loading subscription options...
-                </Text>
+                <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>Loading subscription options...</Text>
               </View>
             ) : error ? (
               <View style={styles.errorContainer}>
-                <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                  Unable to load subscription options. Please try again later.
-                </Text>
-                <TouchableOpacity
-                  style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-                  onPress={() => window.location.reload()}
-                >
-                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
-                    Retry
-                  </Text>
+                <Text style={[styles.errorText, { color: theme.colors.error }]}>Unable to load subscription options. Please try again later.</Text>
+                <TouchableOpacity style={[styles.retryButton, { backgroundColor: theme.colors.primary }]} onPress={() => window.location.reload()}>
+                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>Retry</Text>
                 </TouchableOpacity>
               </View>
             ) : packages.length > 0 ? (
               <View style={styles.packagesSection}>
-                <Text style={[styles.packagesTitle, { color: theme.colors.onSurface }]}>
-                  Choose Your Plan
-                </Text>
                 {packages.map((packageItem, index) => {
                   const savings = getPackageSavings(packageItem);
                   const isPopular = packageItem.identifier.includes('annual') || packageItem.identifier.includes('yearly');
                   
                   return (
-                    <TouchableOpacity
-                      key={packageItem.identifier}
-                      style={[
-                        styles.packageItem,
-                        {
-                          backgroundColor: isPopular ? theme.colors.primary + '10' : theme.colors.background,
-                          borderColor: isPopular ? theme.colors.primary : theme.colors.outline,
-                          borderWidth: isPopular ? 2 : 1,
-                        }
-                      ]}
-                      onPress={() => handlePurchase(packageItem)}
-                      disabled={purchasing}
-                    >
+                    <TouchableOpacity key={packageItem.identifier} style={[styles.packageItem, { backgroundColor: isPopular ? theme.colors.surfaceVariant : theme.colors.background, borderColor: isPopular ? '#8B5CF6' : theme.colors.outline, borderWidth: isPopular ? 2 : 1 }]} onPress={() => handlePurchase(packageItem)} disabled={purchasing}>
                       {isPopular && (
-                        <View style={[styles.popularBadge, { backgroundColor: theme.colors.primary }]}>
-                          <Text style={[styles.popularBadgeText, { color: theme.colors.onPrimary }]}>
-                            Most Popular
-                          </Text>
+                        <View style={[styles.popularBadge, { backgroundColor: '#8B5CF6' }]}>
+                          <Text style={[styles.popularBadgeText, { color: '#FFFFFF' }]}>15% OFF</Text>
                         </View>
                       )}
                       <View style={styles.packageContent}>
-                        <Text style={[styles.packageTitle, { color: theme.colors.onSurface }]}>
-                          {getPackageTitle(packageItem)}
-                        </Text>
-                        <Text style={[styles.packageDescription, { color: theme.colors.onSurfaceVariant }]}>
-                          {getPackageDescription(packageItem)}
-                          {savings && (
-                            <Text style={[styles.packageSavings, { color: theme.colors.primary }]}>
-                              {savings}
-                            </Text>
-                          )}
-                        </Text>
+                        <Text style={[styles.packageTitle, { color: theme.colors.onSurface }]}>{getPackageTitle(packageItem)}</Text>
+                        <Text style={[styles.packageDescription, { color: theme.colors.onSurfaceVariant }]}>{getPackageDescription(packageItem)}{savings && <Text style={[styles.packageSavings, { color: '#8B5CF6' }]}>{savings}</Text>}</Text>
                       </View>
-                      <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>
-                        {formatPrice(packageItem)}
-                      </Text>
+                      <Text style={[styles.packagePrice, { color: '#8B5CF6' }]}>{formatPrice(packageItem)}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
             ) : (
               <View style={styles.noPackagesContainer}>
-                <Text style={[styles.noPackagesText, { color: theme.colors.onSurfaceVariant }]}>
-                  No subscription options available at the moment. Please check your internet connection and try again.
-                </Text>
-                <TouchableOpacity
-                  style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-                  onPress={() => window.location.reload()}
-                >
-                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
-                    Retry
-                  </Text>
+                <Text style={[styles.noPackagesText, { color: theme.colors.onSurfaceVariant }]}>No subscription options available at the moment. Please check your internet connection and try again.</Text>
+                <TouchableOpacity style={[styles.retryButton, { backgroundColor: theme.colors.primary }]} onPress={() => window.location.reload()}>
+                  <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>Retry</Text>
                 </TouchableOpacity>
               </View>
             )}
 
             {/* Restore Button */}
-            <TouchableOpacity
-              style={[styles.restoreButton, { backgroundColor: theme.colors.surfaceVariant }]}
-              onPress={handleRestore}
-              disabled={purchasing}
-            >
-              <Text style={[styles.restoreButtonText, { color: theme.colors.onSurface }]}>
-                Restore Purchases
-              </Text>
+            <TouchableOpacity style={[styles.continueButton, { backgroundColor: '#8B5CF6' }]} onPress={() => handlePurchase(packages[0])} disabled={purchasing}>
+              <Text style={[styles.continueButtonText, { color: '#FFFFFF' }]}>Continue</Text>
             </TouchableOpacity>
-
-            {/* Terms */}
-            <View style={styles.termsSection}>
-              <Text style={[styles.termsText, { color: theme.colors.onSurfaceVariant }]}>
-                Subscriptions auto-renew unless cancelled. You can manage your subscription in your device settings.
-              </Text>
+            <View style={styles.restoreTermsContainer}>
+              <TouchableOpacity onPress={handleRestore}>
+                <Text style={[styles.restoreText, { color: theme.colors.onSurfaceVariant }]}>Restore Purchases</Text>
+              </TouchableOpacity>
+              <Text style={[styles.termsSeparator, { color: theme.colors.onSurfaceVariant }]}>|</Text>
+              <TouchableOpacity>
+                <Text style={[styles.termsText, { color: theme.colors.onSurfaceVariant }]}>Terms</Text>
+              </TouchableOpacity>
+              <Text style={[styles.termsSeparator, { color: theme.colors.onSurfaceVariant }]}>|</Text>
+              <TouchableOpacity>
+                <Text style={[styles.termsText, { color: theme.colors.onSurfaceVariant }]}>Privacy</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
 
           {purchasing && (
             <View style={styles.purchasingOverlay}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[styles.purchasingText, { color: theme.colors.onSurface }]}>
-                Processing purchase...
-              </Text>
+              <Text style={[styles.purchasingText, { color: theme.colors.onSurface }]}>Processing purchase...</Text>
             </View>
           )}
         </View>
@@ -348,10 +303,14 @@ const styles = StyleSheet.create({
   heroIcon: {
     width: 80,
     height: 80,
-    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  appIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 15,
   },
   heroTitle: {
     fontSize: 28,
@@ -373,9 +332,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -421,12 +380,6 @@ const styles = StyleSheet.create({
   packagesSection: {
     paddingVertical: 20,
   },
-  packagesTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
   packageItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -436,6 +389,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
     position: 'relative',
+    borderWidth: 1,
   },
   popularBadge: {
     position: 'absolute',
@@ -479,23 +433,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
-  restoreButton: {
+  continueButton: {
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginVertical: 20,
   },
-  restoreButtonText: {
+  continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
-  termsSection: {
+  restoreTermsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingBottom: 20,
+  },
+  restoreText: {
+    fontSize: 12,
+    padding: 4,
   },
   termsText: {
     fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
+    padding: 4,
+  },
+  termsSeparator: {
+    fontSize: 12,
+    marginHorizontal: 4,
   },
   purchasingOverlay: {
     position: 'absolute',
