@@ -154,15 +154,26 @@ function ThemedApp() {
   useEffect(() => {
     if (!loading && !hasNavigated) {
       if (!user) {
-        // Only handle web-specific redirects on web platform
-        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+        // Handle web-specific redirects on web platform
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
           const currentPath = window.location.pathname;
-          const isAuthPath = currentPath.includes('/sign-in') || 
-                            currentPath.includes('/sign-up') || 
-                            currentPath.includes('/forgot-password') ||
-                            currentPath.includes('/oauth-callback');
+          const currentHash = window.location.hash;
           
-          if (!isAuthPath) {
+          // Check if we have an access token in the URL hash
+          const hasAccessToken = currentHash.includes('access_token=');
+          
+          // Check if we're on an auth path
+          const isAuthPath = 
+            currentPath.includes('/sign-in') || 
+            currentPath.includes('/sign-up') || 
+            currentPath.includes('/forgot-password') ||
+            currentPath.includes('/oauth-callback');
+          
+          if (hasAccessToken) {
+            // If we have an access token in the URL, let Supabase handle it
+            console.log('Access token detected in URL, handling auth');
+            router.replace('/(auth)/oauth-callback');
+          } else if (!isAuthPath) {
             // Clear any invalid tokens to prevent refresh token errors
             signOut();
             // Use router for smoother navigation

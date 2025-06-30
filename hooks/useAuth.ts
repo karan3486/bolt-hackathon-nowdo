@@ -103,6 +103,9 @@ export function useAuth() {
       email,
       password,
       options: {
+        emailRedirectTo: Platform.OS === 'web' 
+          ? `${window.location.origin}/(auth)/oauth-callback` 
+          : 'nowdo://(auth)/oauth-callback',
         data: {
           full_name: fullName,
         },
@@ -203,9 +206,9 @@ export function useAuth() {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectTo = Platform.OS === 'web' 
-      ? `${window.location.origin}/reset-password`
-      : 'nowdo://reset-password';
+    const redirectTo = Platform.OS === 'web'
+      ? `${window.location.origin}/(auth)/oauth-callback`
+      : 'nowdo://(auth)/oauth-callback';
       
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
