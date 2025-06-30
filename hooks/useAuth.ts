@@ -99,6 +99,8 @@ export function useAuth() {
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    try {
+      // First, attempt to sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -171,6 +173,7 @@ export function useAuth() {
               access_type: 'offline',
               prompt: 'consent',
             },
+            email: email, // Ensure email is included in metadata
           },
         });
         return { data, error };
@@ -210,7 +213,34 @@ export function useAuth() {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });
-    return { data, error };
+      
+      if (error) {
+        console.error('Supabase auth signup error:', error);
+        return { data, error };
+      }
+
+      // If signup was successful but user needs email confirmation
+      if (data.user && !data.session) {
+        console.log('User created successfully, email confirmation required');
+        return { data, error: null };
+      }
+
+      // If signup was successful and user is immediately signed in
+      if (data.user && data.session) {
+        console.log('User created and signed in successfully');
+        return { data, error: null };
+      }
+
+      return { data, error };
+    } catch (error: any) {
+      console.error('Unexpected error during signup:', error);
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'An unexpected error occurred during registration' 
+        } 
+      };
+    }
   };
 
   return {
