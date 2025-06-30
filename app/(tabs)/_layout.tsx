@@ -1,13 +1,17 @@
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { useState } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Modal, Dimensions, Image, Linking } from 'react-native';
 import { Chrome as Home, SquareCheck as CheckSquare, Sparkles, Timer, Target, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import MoreMenu from '../../components/MoreMenu';
 
 export default function TabsLayout() {
   const theme = useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  const handleBoltBadgePress = () => {
+    Linking.openURL('https://bolt.new/');
+  };
 
   return (
     <>
@@ -136,6 +140,43 @@ export default function TabsLayout() {
         visible={showMoreMenu} 
         onClose={() => setShowMoreMenu(false)} 
       />
+
+      {/* Bolt.new Badge */}
+      <TouchableOpacity
+        style={styles.boltBadge}
+        onPress={handleBoltBadgePress}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={{ uri: 'https://raw.githubusercontent.com/stackblitz/bolt.new/main/public/badge-white-circle.svg' }}
+          style={styles.boltBadgeImage}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  boltBadge: {
+    position: 'absolute',
+    bottom: 100, // Above the tab bar
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  boltBadgeImage: {
+    width: 40,
+    height: 40,
+  },
+});
