@@ -430,15 +430,13 @@ export default function TasksScreen() {
             <View style={styles.taskChips}>
               <Chip 
                 style={[styles.categoryChip, { backgroundColor: taskCategoryColors[task.category] + '15' }]}
-                textStyle={{ color: taskCategoryColors[task.category], fontSize: 10 }}
-                compact
+                textStyle={{ color: taskCategoryColors[task.category], fontSize: 10, lineHeight: 12 }}
               >
                 {task.category}
               </Chip>
               <Chip 
                 style={[styles.priorityChip, { backgroundColor: taskColor + '15' }]}
-                textStyle={{ color: taskColor, fontSize: 10 }}
-                compact
+                textStyle={{ color: taskColor, fontSize: 10, lineHeight: 12 }}
               >
                 {task.priority}
               </Chip>
@@ -1025,10 +1023,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   categoryChip: {
-    height: 18,
+    height: 24,
+    paddingVertical: 0,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
   },
   priorityChip: {
-    height: 20,
+    height: 24,
+    paddingVertical: 0,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
   },
   expandedActions: {
     flexDirection: 'row',

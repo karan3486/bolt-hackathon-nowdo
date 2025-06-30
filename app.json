@@ -9,15 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
-      "expo-router", 
-      "expo-font", 
-      "expo-web-browser",
-      [
-        "react-native-purchases",
-        {
-          "revenuecat_project_id": "projf124ae41"
-        }
-      ]
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
     ],
     "infoPlist": {
       "NSCameraUsageDescription": "This app uses the camera to allow you to take profile pictures and upload photos for your tasks and habits.",
@@ -27,8 +21,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to allow you to take profile pictures and upload photos for your tasks and habits.",
-        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to allow you to select and upload profile pictures and images for your tasks and habits."
-      }
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to allow you to select and upload profile pictures and images for your tasks and habits.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.karan9996.nowdo"
     },
     "android": {
       "permissions": [
@@ -44,6 +40,12 @@
     },
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9b6989c6-31a0-4e9a-aa66-1e9d4fed10b1"
+      }
     }
   }
 }
