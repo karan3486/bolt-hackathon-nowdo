@@ -180,12 +180,13 @@ function ThemedApp() {
     }
   }, [user, loading, hasNavigated, signOut]);
 
-  // Reset navigation flag when user changes (for logout scenarios)
+  // Reset navigation flag only when user logs out, not during sign-up
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !user) {
+      // Only reset navigation when user becomes null (logout)
       setHasNavigated(false);
     }
-  }, [user?.id, loading]);
+  }, [user, loading]);
 
   const theme = isDark ? darkTheme : lightTheme;
 

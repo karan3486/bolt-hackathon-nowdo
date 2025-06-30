@@ -20,6 +20,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import AuthMessage from '../../components/AuthMessage';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { supabase } from '../../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -134,7 +135,12 @@ export default function SignUpScreen() {
       if (error) {
         showError(`Registration failed: ${error.message}`);
       } else {
-        showSuccess('Account created successfully! Please check your email to verify your account.');
+        // Always sign out after successful signup
+        if (data && data.user) {
+          // Sign out the user to force them to log in again
+          await supabase.auth.signOut();
+        }
+        
         // Clear form
         setFormData({
           fullName: '',
@@ -145,7 +151,9 @@ export default function SignUpScreen() {
         });
         setAgreeToTerms(false);
         setAgreeToPrivacy(false);
-        // Navigate to sign-in after showing success message
+        
+        // Always redirect to sign-in page after successful signup
+        showSuccess('Account created successfully! Please log in with your new credentials.');
         setTimeout(() => {
           router.replace('/(auth)/sign-in');
         }, 2000);
