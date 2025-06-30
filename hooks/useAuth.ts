@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Platform, Linking } from 'react-native';
-import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 
 export interface AuthState {
   user: User | null;
@@ -19,18 +18,6 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true;
-    
-    // Set up deep link handler for auth callbacks
-    const handleDeepLink = (event: { url: string }) => {
-      if (event.url.includes('auth-callback') || event.url.includes('access_token')) {
-        console.log('Deep link auth callback detected:', event.url);
-      }
-    };
-    
-    // Register deep link handler
-    if (Platform.OS !== 'web') {
-      Linking.addEventListener('url', handleDeepLink);
-    }
 
     // Get initial session
     const getInitialSession = async () => {
@@ -108,31 +95,17 @@ export function useAuth() {
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      
-      // Clean up deep link handler
-      if (Platform.OS !== 'web') {
-        Linking.removeAllListeners('url');
-      }
     };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // Determine the redirect URL based on platform
-    const redirectTo = Platform.OS === 'web' 
-      ? `${window.location.origin}/oauth-callback`
-      : 'nowdo://oauth-callback';
-      
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: Platform.OS === 'web' 
-          ? `${window.location.origin}/(auth)/oauth-callback` 
-          : 'nowdo://(auth)/oauth-callback',
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: redirectTo,
       },
     });
     return { data, error };
@@ -189,19 +162,11 @@ export function useAuth() {
   const signInWithGoogle = async () => {
     try {
       if (Platform.OS === 'web') {
-        const redirectUrl = typeof window !== 'undefined' 
-          ? `${window.location.origin}/auth-callback`
-          : 'https://nowdo-app.vercel.app/auth-callback';
-          
-        const redirectUrl = typeof window !== 'undefined' 
-          ? `${window.location.origin}/oauth-callback`
-          : 'https://nowdo-app.vercel.app/oauth-callback';
-          
         // Web implementation
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: redirectUrl,
+            redirectTo: `${window.location.origin}/(tabs)`,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent',
@@ -212,31 +177,10 @@ export function useAuth() {
       } else {
         // Mobile implementation would require expo-auth-session
         // For now, return an error indicating it's not implemented
-        try {
-          const redirectUrl = 'nowdo://oauth-callback';
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: redirectUrl,
-              skipBrowserRedirect: true,
-            }
-          });
-          
-          if (error) throw error;
-          
-          if (data?.url) {
-            // Open the URL in the device browser
-            await Linking.openURL(data.url);
-          }
-          
-          return { data, error: null };
-        } catch (error) {
-          console.error('Mobile OAuth error:', error);
-          return { 
-            data: null, 
-            error: { message: 'Google sign-in failed on mobile. Please try again.' } 
-          };
-        }
+        return { 
+          data: null, 
+          error: { message: 'Google sign-in is currently only available on web. Mobile support coming soon!' } 
+        };
       }
     } catch (error) {
       return { 
@@ -259,9 +203,9 @@ export function useAuth() {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectTo = Platform.OS === 'web'
-      ? `${window.location.origin}/auth-callback`
-      : 'nowdo://auth-callback';
+    const redirectTo = Platform.OS === 'web' 
+      ? `${window.location.origin}/reset-password`
+      : 'nowdo://reset-password';
       
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

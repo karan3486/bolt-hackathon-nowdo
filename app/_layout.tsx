@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { router, useSegments, useRootNavigationState } from 'expo-router';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useColorScheme, Platform } from 'react-native';
 import { store } from '../store';
-import * as Linking from 'expo-linking';
 import { lightTheme, darkTheme } from '../constants/theme';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useSelector } from 'react-redux';
@@ -78,27 +77,7 @@ function ThemedApp() {
   const { user, loading, signOut } = useAuth();
   const [hasNavigated, setHasNavigated] = useState(false);
   
-  // Get current navigation state and segments for better navigation control
-  const segments = useSegments();
-  const navigationState = useRootNavigationState();
-  
   // Initialize user data when user is authenticated
-  
-  // Handle deep links for auth
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      // Set up initial URL handler
-      const getInitialURL = async () => {
-        const initialURL = await Linking.getInitialURL();
-        if (initialURL) {
-          console.log('Initial URL:', initialURL);
-        }
-      };
-      
-      getInitialURL();
-    }
-  }, []);
-  
   const { 
     tasks, 
     habits, 
@@ -172,41 +151,34 @@ function ThemedApp() {
   }, [themeMode, colorScheme]);
 
   // Handle navigation only once when auth state is determined
-  // This is a more robust approach that works with deep linking
   useEffect(() => {
-    // Wait for navigation to be ready
-    if (!navigationState?.key || loading) return;
-    
-    const inAuthGroup = segments[0] === '(auth)';
-    
-    if (!hasNavigated) {
+    if (!loading && !hasNavigated) {
       if (!user) {
-        // Handle web-specific redirects on web platform
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        // Only handle web-specific redirects on web platform
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
           const currentPath = window.location.pathname;
-          const currentHash = window.location.hash;
+          const isAuthPath = currentPath.includes('/sign-in') || 
+                            currentPath.includes('/sign-up') || 
+                            currentPath.includes('/forgot-password') ||
+                            currentPath.includes('/oauth-callback');
           
-          // Check if we have an access token in the URL hash
-          const hasAccessToken = currentHash.includes('access_token=');
-          
-          // Check if we're on an auth path
-          const isAuthPath = currentPath.includes('/sign-in');
-        }
-        // If we're not in the auth group, redirect to sign-in
-        if (!inAuthGroup) {
-          // Clear any invalid tokens to prevent refresh token errors
-          signOut();
+          if (!isAuthPath) {
+            // Clear any invalid tokens to prevent refresh token errors
+            signOut();
+            // Use router for smoother navigation
+            router.replace('/(auth)/sign-in');
+          }
+        } else if (Platform.OS !== 'web') {
+          // For mobile platforms, navigate to auth without checking paths
           router.replace('/(auth)/sign-in');
         }
       } else {
-        // If we're in the auth group but user is authenticated, redirect to main app
-        if (inAuthGroup) {
-          router.replace('/(tabs)');
-        }
+        // User is authenticated, navigate to main app
+        router.replace('/(tabs)');
       }
       setHasNavigated(true);
     }
-  }, [user, segments, navigationState?.key, loading, hasNavigated, signOut]);
+  }, [user, loading, hasNavigated, signOut]);
 
   // Reset navigation flag when user changes (for logout scenarios)
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import AuthMessage from '../../components/AuthMessage';
@@ -8,25 +8,16 @@ import AuthMessage from '../../components/AuthMessage';
 export default function OAuthCallbackScreen() {
   const { user, loading } = useAuth();
   const { message, showSuccess, showError, clearMessage } = useAuthMessages();
-  const params = useLocalSearchParams();
-  
-  // Handle access token from URL if present
-  useEffect(() => {
-    if (params.access_token) {
-      console.log('Access token detected in URL, handling auth callback');
-      // The auth system will automatically handle this token
-    }
-  }, [params]);
 
   useEffect(() => {
     if (!loading) {
       if (user) {
-        showSuccess('Successfully authenticated!');
+        showSuccess('Successfully signed in with Google!');
         setTimeout(() => {
           router.replace('/(tabs)');
         }, 1000);
       } else {
-        showError('Authentication failed or was cancelled. Please try again.');
+        showError('Authentication failed. Please try again.');
         setTimeout(() => {
           router.replace('/(auth)/sign-in');
         }, 2000);
@@ -37,9 +28,6 @@ export default function OAuthCallbackScreen() {
   return (
     <View style={styles.container}>
       {loading && <ActivityIndicator size="large" color="#0284C7" />}
-      <Text style={styles.message}>
-        {loading ? 'Completing authentication...' : 'Redirecting...'}
-      </Text>
       {message && (
         <AuthMessage
           message={message.text}

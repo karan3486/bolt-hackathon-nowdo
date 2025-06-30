@@ -3,39 +3,15 @@
     "name": "NowDo",
     "slug": "now-do",
     "version": "1.0.0",
-    "scheme": "nowdo",
-    "scheme": "nowdo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "scheme": "nowdo",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
-      [
-      ["expo-router", {
-        "origin": "https://nowdo-app.vercel.app"
-      }],
-        {
-          "origin": "https://nowdo-app.vercel.app"
-        }
-      ],
+      "expo-router", 
       "expo-font", 
-      "expo-web-browser",
-      "expo-build-properties"
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ]
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ]
+      "expo-web-browser"
     ],
     "infoPlist": {
       "NSCameraUsageDescription": "This app uses the camera to allow you to take profile pictures and upload photos for your tasks and habits.",
@@ -60,17 +36,13 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png",
-      "origin": "https://nowdo-app.vercel.app"
-      "scheme": "nowdo"
+      "favicon": "./assets/images/favicon.png"
     },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": "https://nowdo-app.vercel.app"
-      },
+      "router": {},
       "eas": {
         "projectId": "9b6989c6-31a0-4e9a-aa66-1e9d4fed10b1"
       }
