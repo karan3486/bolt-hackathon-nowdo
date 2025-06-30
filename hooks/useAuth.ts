@@ -100,6 +100,7 @@ export function useAuth() {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
+      // First, attempt to sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -107,6 +108,7 @@ export function useAuth() {
           data: {
             full_name: fullName,
           },
+          email: email, // Ensure email is included in metadata
         },
       });
       
@@ -115,7 +117,17 @@ export function useAuth() {
         return { data, error };
       }
 
-      console.log('User signup successful:', data);
+      // If signup was successful but user needs email confirmation
+      if (data.user && !data.session) {
+        console.log('User created successfully, email confirmation required');
+        return { data, error: null };
+      }
+
+      // If signup was successful and user is immediately signed in
+      if (data.user && data.session) {
+        console.log('User created and signed in successfully');
+        return { data, error: null };
+      }
 
       return { data, error };
     } catch (error: any) {
@@ -130,28 +142,11 @@ export function useAuth() {
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        console.error('Supabase auth signin error:', error);
-        return { data, error };
-      }
-
-      console.log('User signin successful:', data);
-      return { data, error };
-    } catch (error: any) {
-      console.error('Unexpected error during signin:', error);
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'An unexpected error occurred during sign in' 
-        } 
-      };
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
   };
 
   const signOut = async () => {
@@ -246,13 +241,31 @@ export function useAuth() {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
+        
+      if (error) {
+        console.error('Supabase auth signup error:', error);
+        return { data, error };
+      }
+
+      // If signup was successful but user needs email confirmation
+      if (data.user && !data.session) {
+        console.log('User created successfully, email confirmation required');
+        return { data, error: null };
+      }
+
+      // If signup was successful and user is immediately signed in
+      if (data.user && data.session) {
+        console.log('User created and signed in successfully');
+        return { data, error: null };
+      }
+
       return { data, error };
     } catch (error: any) {
-      console.error('Unexpected error during password reset:', error);
+      console.error('Unexpected error during signup:', error);
       return { 
         data: null, 
         error: { 
-          message: error.message || 'An unexpected error occurred during password reset' 
+          message: error.message || 'An unexpected error occurred during registration' 
         } 
       };
     }

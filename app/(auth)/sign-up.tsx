@@ -149,7 +149,11 @@ export default function SignUpScreen() {
         
         showError(errorMessage);
       } else {
-        showSuccess('Account created successfully!');
+        if (data.user && !data.session) {
+          showSuccess('Account created successfully! Please check your email to verify your account.');
+        } else {
+          showSuccess('Account created successfully!');
+        }
         
         // Clear form
         setFormData({
@@ -162,10 +166,18 @@ export default function SignUpScreen() {
         setAgreeToTerms(false);
         setAgreeToPrivacy(false);
         
-        // Navigate to sign-in after showing success message
-        setTimeout(() => {
-          router.replace('/(auth)/sign-in');
-        }, 2000);
+        // Navigate based on whether email confirmation is required
+        if (data.user && !data.session) {
+          // Email confirmation required
+          setTimeout(() => {
+            router.replace('/(auth)/sign-in');
+          }, 2000);
+        } else if (data.user && data.session) {
+          // User is immediately signed in
+          setTimeout(() => {
+            router.replace('/(tabs)');
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error('Unexpected signup error:', error);

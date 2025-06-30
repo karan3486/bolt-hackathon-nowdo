@@ -564,7 +564,7 @@ export class DatabaseService {
     try {
       const { data, error } = await supabase
         .from('user_settings')
-        .insert({
+        .upsert({
           user_id: userId,
           theme_preference: 'dark',
           notifications_enabled: true,
@@ -576,6 +576,8 @@ export class DatabaseService {
           auto_backup: true,
           sound_effects: true,
           haptic_feedback: true,
+        }, {
+          onConflict: 'user_id'
         })
         .select()
         .single();
