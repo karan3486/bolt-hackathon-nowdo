@@ -1,13 +1,17 @@
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { useState } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Modal, Dimensions, Image, Linking } from 'react-native';
 import { Chrome as Home, SquareCheck as CheckSquare, Sparkles, Timer, Target, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import MoreMenu from '../../components/MoreMenu';
 
 export default function TabsLayout() {
   const theme = useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  const handleBoltBadgePress = () => {
+    Linking.openURL('https://bolt.new/');
+  };
 
   return (
     <>

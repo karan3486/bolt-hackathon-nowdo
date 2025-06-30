@@ -9,8 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
-      "expo-router",
-      "expo-font",
+      "expo-router", 
+      "expo-font", 
       "expo-web-browser"
     ],
     "infoPlist": {
