@@ -148,7 +148,7 @@ export default function TabsLayout() {
         activeOpacity={0.8}
       >
         <Image
-          source={{ uri: 'https://raw.githubusercontent.com/stackblitz/bolt.new/main/public/badge-white-circle.svg' }}
+          source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/black_circle_360x360/black_circle_360x360.png' }}
           style={styles.boltBadgeImage}
           resizeMode="contain"
         />
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   boltBadgeImage: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
   },
 });
