@@ -11,15 +11,7 @@
     "plugins": [
       "expo-router", 
       "expo-font", 
-      "expo-web-browser",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#6750A4",
-          "sounds": ["./assets/sounds/notification.wav"]
-        }
-      ]
+      "expo-web-browser"
     ],
     "infoPlist": {
       "NSCameraUsageDescription": "This app uses the camera to allow you to take profile pictures and upload photos for your tasks and habits.",
