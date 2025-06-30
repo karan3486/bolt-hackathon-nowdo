@@ -441,63 +441,31 @@ export class DatabaseService {
   }
 
   static async createUserProfile(userId: string, profile: Partial<UserProfile>) {
-    // First check if profile already exists
-    const { data: existingProfile } = await supabase
+    // Use upsert to handle both insert and update cases
+    const { data, error } = await supabase
       .from('user_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .upsert({
+        user_id: userId,
+        first_name: profile.firstName || null,
+        last_name: profile.lastName || null,
+        email: profile.email || null,
+        profile_picture_url: profile.profilePictureUrl || null,
+        phone_number: profile.phoneNumber || null,
+        date_of_birth: profile.dateOfBirth || null,
+        location: profile.location || null,
+        profession: profile.profession || null,
+      }, {
+        onConflict: 'user_id'
+      })
+      .select()
+      .single();
 
-    if (existingProfile) {
-      // Update existing profile
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
-          profile_picture_url: profile.profilePictureUrl,
-          phone_number: profile.phoneNumber,
-          date_of_birth: profile.dateOfBirth,
-          location: profile.location,
-          profession: profile.profession,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating user profile:', error);
-        throw new Error(`Failed to update user profile: ${error.message}`);
-      }
-
-      return data;
-    } else {
-      // Create new profile
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: userId,
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
-          profile_picture_url: profile.profilePictureUrl,
-          phone_number: profile.phoneNumber,
-          date_of_birth: profile.dateOfBirth,
-          location: profile.location,
-          profession: profile.profession,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating user profile:', error);
-        throw new Error(`Failed to create user profile: ${error.message}`);
-      }
-
-      return data;
+    if (error) {
+      console.error('Error creating user profile:', error);
+      throw new Error(`Failed to create user profile: ${error.message}`);
     }
+
+    return data;
   }
 
   static async ensureUserRecordsExist(userId: string) {
@@ -540,31 +508,6 @@ export class DatabaseService {
       console.error('Error ensuring user records exist:', error);
       return false;
     }
-  }
-
-  static async createUserProfile(userId: string, profile: Partial<UserProfile>) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .insert({
-        user_id: userId,
-        first_name: profile.firstName,
-        last_name: profile.lastName,
-        email: profile.email,
-        profile_picture_url: profile.profilePictureUrl,
-        phone_number: profile.phoneNumber,
-        date_of_birth: profile.dateOfBirth,
-        location: profile.location,
-        profession: profile.profession,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating user profile:', error);
-      throw new Error(`Failed to create user profile: ${error.message}`);
-    }
-
-    return data;
   }
 
   static async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
