@@ -30,6 +30,8 @@ import { RootState } from '../../store';
 import { useUserData } from '../../hooks/useUserData';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
 import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
+import { useTaskNotifications } from '../../hooks/useTaskNotifications';
+import { useNotifications } from '../../hooks/useNotifications';
 import { 
   addTask, 
   updateTask, 
@@ -43,6 +45,7 @@ import { Task, TaskCategory, TaskPriority, TaskStatus } from '../../types';
 import { taskCategoryColors, priorityColors, getTaskColor } from '../../constants/theme';
 import { canCreateTask, getTaskLimitMessage } from '../../utils/taskLimits';
 import PaywallModal from '../../components/PaywallModal';
+import NotificationSettings, { NotificationSettings as NotificationSettingsType } from '../../components/NotificationSettings';
 import { Plus, Search, Filter, CircleCheck as CheckCircle, Circle, Clock, Trash2, CreditCard as Edit3, MoveVertical as MoreVertical, X, Calendar, CircleAlert as AlertCircle, Crown } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '../../components/DateTimePicker';
@@ -70,6 +73,13 @@ export default function TasksScreen() {
   const [isFilterMenuVisible, setIsFilterMenuVisible] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettingsType>({
+    enabled: true,
+    reminderMinutes: 30,
+    soundEnabled: true,
+    vibrationEnabled: true,
+  });
   
   // Form state without duration
   const [formData, setFormData] = useState({
@@ -80,6 +90,9 @@ export default function TasksScreen() {
     scheduledDate: new Date().toISOString().split('T')[0], // Today's date
     scheduledTime: '09:00', // Default 9 AM
   });
+
+  const { scheduleNotificationsForTasks, scheduleNotificationForSingleTask } = useTaskNotifications();
+  const { permissionStatus } = useNotifications();
 
   // Check subscription status
   const isPremium = hasPremiumAccess();
@@ -99,6 +112,13 @@ export default function TasksScreen() {
       dispatch(setFilter(newFilter));
     }
   }, [params, dispatch]);
+
+  // Schedule notifications when tasks change
+  useEffect(() => {
+    if (notificationSettings.enabled && tasks.length > 0) {
+      scheduleNotificationsForTasks(tasks, notificationSettings);
+    }
+  }, [tasks, notificationSettings, scheduleNotificationsForTasks]);
 
   // Get task status based on date and current status
   const getTaskDisplayStatus = (task: Task): { status: string; color: string } => {
@@ -178,6 +198,8 @@ export default function TasksScreen() {
     createTaskInDB(taskData)
       .then((newTask) => {
         dispatch(addTask(taskData));
+        // Schedule notification for the new task
+        scheduleNotificationForSingleTask(newTask, notificationSettings);
         showSuccess('Task created successfully!');
         setFormData({ 
           title: '', 
@@ -214,6 +236,8 @@ export default function TasksScreen() {
     updateTaskInDB(selectedTask.id, updates)
       .then((updatedTask) => {
         dispatch(updateTask({ id: selectedTask.id, ...updates }));
+        // Reschedule notifications for all tasks to handle the update
+        scheduleNotificationsForTasks(tasks, notificationSettings);
         showSuccess('Task updated successfully!');
         setSelectedTask(null);
         setIsEditModalVisible(false);
@@ -275,6 +299,8 @@ export default function TasksScreen() {
     updateTaskInDB(taskId, { status: newStatus })
       .then(() => {
         dispatch(toggleTaskStatus(taskId));
+        // Reschedule notifications since task status changed
+        scheduleNotificationsForTasks(tasks, notificationSettings);
         showSuccess(`Task marked as ${newStatus}!`);
       })
       .catch((error) => {
@@ -296,6 +322,12 @@ export default function TasksScreen() {
       dateFilter: 'today',
     }));
     setIsFilterMenuVisible(false);
+  };
+
+  const handleNotificationSettingsChange = (newSettings: NotificationSettingsType) => {
+    setNotificationSettings(newSettings);
+    // Reschedule all notifications with new settings
+    scheduleNotificationsForTasks(tasks, newSettings);
   };
 
   const getActiveFilterCount = () => {
@@ -830,6 +862,14 @@ export default function TasksScreen() {
         onPurchaseSuccess={() => {
           showSuccess('Welcome to Premium! You can now create unlimited tasks.');
         }}
+      />
+
+      {/* Notification Settings Modal */}
+      <NotificationSettings
+        visible={showNotificationSettings}
+        onClose={() => setShowNotificationSettings(false)}
+        currentSettings={notificationSettings}
+        onSettingsChange={handleNotificationSettingsChange}
       />
     </SafeAreaView>
   );

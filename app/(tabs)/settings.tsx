@@ -41,10 +41,12 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useUserData } from '../../hooks/useUserData';
 import { useAuthMessages } from '../../hooks/useAuthMessages';
+import { useNotifications } from '../../hooks/useNotifications';
 import { setThemeMode } from '../../store/slices/themeSlice';
 import { RootState } from '../../store';
 import AuthMessage from '../../components/AuthMessage';
 import DataManagementModal from '../../components/DataManagementModal';
+import NotificationSettings, { NotificationSettings as NotificationSettingsType } from '../../components/NotificationSettings';
 import { supabase } from '../../lib/supabase';
 
 interface UserSettings {
@@ -87,10 +89,28 @@ export default function SettingsScreen() {
   
   const [loading, setLoading] = useState(false);
   const [showDataModal, setShowDataModal] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettingsType>({
+    enabled: true,
+    reminderMinutes: 30,
+    soundEnabled: true,
+    vibrationEnabled: true,
+  });
   const currentTheme = useSelector((state: RootState) => state.theme.mode);
+  const { permissionStatus } = useNotifications();
 
   const handleBoltBadgePress = () => {
     Linking.openURL('https://bolt.new/');
+  };
+
+  const handleNotificationSettingsChange = (newSettings: NotificationSettingsType) => {
+    setNotificationSettings(newSettings);
+    // Save to user settings in database
+    updateUserSettings(user.id, {
+      notification_reminder_minutes: newSettings.reminderMinutes,
+      notification_sound_enabled: newSettings.soundEnabled,
+      notification_vibration_enabled: newSettings.vibrationEnabled,
+    }).catch(console.error);
   };
 
   useEffect(() => {
@@ -426,15 +446,9 @@ export default function SettingsScreen() {
           <SettingRow
             icon={Bell}
             title="Push Notifications"
-            subtitle="Receive notifications on your device"
-            rightElement={
-              <Switch
-                value={settings.notificationsEnabled}
-                onValueChange={(value) => handleToggleSetting('notificationsEnabled', value)}
-                trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary + '40' }}
-                thumbColor={settings.notificationsEnabled ? theme.colors.primary : theme.colors.onSurfaceVariant}
-              />
-            }
+            subtitle={`Task reminders • ${permissionStatus === 'granted' ? 'Enabled' : 'Disabled'}`}
+            onPress={() => setShowNotificationSettings(true)}
+            showChevron
           />
           <SettingRow
             icon={Mail}
@@ -464,6 +478,25 @@ export default function SettingsScreen() {
               }
             />
           )}
+        </SettingSection>
+
+        {/* Notifications Section */}
+        <SettingSection title="Task Notifications">
+          <SettingRow
+            icon={Bell}
+            title="Task Reminders"
+            subtitle={`Get notified ${notificationSettings.reminderMinutes} minutes before tasks`}
+            onPress={() => setShowNotificationSettings(true)}
+            rightElement={
+              <Switch
+                value={notificationSettings.enabled}
+                onValueChange={(enabled) => setNotificationSettings(prev => ({ ...prev, enabled }))}
+                trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary + '40' }}
+                thumbColor={notificationSettings.enabled ? theme.colors.primary : theme.colors.onSurfaceVariant}
+              />
+            }
+            showChevron
+          />
         </SettingSection>
 
         {/* Privacy & Security Section */}
@@ -599,6 +632,14 @@ export default function SettingsScreen() {
       <DataManagementModal
         visible={showDataModal}
         onClose={() => setShowDataModal(false)}
+      />
+
+      {/* Notification Settings Modal */}
+      <NotificationSettings
+        visible={showNotificationSettings}
+        onClose={() => setShowNotificationSettings(false)}
+        currentSettings={notificationSettings}
+        onSettingsChange={handleNotificationSettingsChange}
       />
 
       {message && (
