@@ -132,29 +132,9 @@ export default function SignUpScreen() {
       );
       
       if (error) {
-        // Provide more specific error messages
-        let errorMessage = 'Registration failed';
-        
-        if (error.message?.includes('already registered')) {
-          errorMessage = 'An account with this email already exists. Please sign in instead.';
-        } else if (error.message?.includes('password')) {
-          errorMessage = 'Password must be at least 6 characters long.';
-        } else if (error.message?.includes('email')) {
-          errorMessage = 'Please enter a valid email address.';
-        } else if (error.message?.includes('Database error')) {
-          errorMessage = 'There was a problem creating your account. Please try again.';
-        } else {
-          errorMessage = `Registration failed: ${error.message}`;
-        }
-        
-        showError(errorMessage);
+        showError(`Registration failed: ${error.message}`);
       } else {
-        if (data.user && !data.session) {
-          showSuccess('Account created successfully! Please check your email to verify your account.');
-        } else {
-          showSuccess('Account created successfully!');
-        }
-        
+        showSuccess('Account created successfully! Please check your email to verify your account.');
         // Clear form
         setFormData({
           fullName: '',
@@ -165,22 +145,12 @@ export default function SignUpScreen() {
         });
         setAgreeToTerms(false);
         setAgreeToPrivacy(false);
-        
-        // Navigate based on whether email confirmation is required
-        if (data.user && !data.session) {
-          // Email confirmation required
-          setTimeout(() => {
-            router.replace('/(auth)/sign-in');
-          }, 2000);
-        } else if (data.user && data.session) {
-          // User is immediately signed in
-          setTimeout(() => {
-            router.replace('/(tabs)');
-          }, 1000);
-        }
+        // Navigate to sign-in after showing success message
+        setTimeout(() => {
+          router.replace('/(auth)/sign-in');
+        }, 2000);
       }
     } catch (error) {
-      console.error('Unexpected signup error:', error);
       showError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

@@ -561,37 +561,30 @@ export class DatabaseService {
   }
 
   static async createUserSettings(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: userId,
-          theme_preference: 'dark',
-          notifications_enabled: true,
-          email_notifications: true,
-          push_notifications: true,
-          language: 'en',
-          privacy_analytics: true,
-          privacy_crash_reports: true,
-          auto_backup: true,
-          sound_effects: true,
-          haptic_feedback: true,
-        }, {
-          onConflict: 'user_id'
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('user_settings')
+      .insert({
+        user_id: userId,
+        theme_preference: 'dark',
+        notifications_enabled: true,
+        email_notifications: true,
+        push_notifications: true,
+        language: 'en',
+        privacy_analytics: true,
+        privacy_crash_reports: true,
+        auto_backup: true,
+        sound_effects: true,
+        haptic_feedback: true,
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating user settings:', error);
-        throw new Error(`Failed to create user settings: ${error.message}`);
-      }
-
-      return data;
-    } catch (error: any) {
-      console.error('Database error in createUserSettings:', error);
-      throw new Error(`Database error: ${error.message}`);
+    if (error) {
+      console.error('Error creating user settings:', error);
+      throw new Error(`Failed to create user settings: ${error.message}`);
     }
+
+    return data;
   }
 
   static async updateUserSettings(userId: string, updates: any) {
