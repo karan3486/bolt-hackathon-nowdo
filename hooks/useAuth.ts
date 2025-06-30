@@ -201,7 +201,6 @@ export function useAuth() {
               access_type: 'offline',
               prompt: 'consent',
             },
-            email: email, // Ensure email is included in metadata
           },
         });
         return { data, error };
@@ -234,14 +233,15 @@ export function useAuth() {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectTo = Platform.OS === 'web' 
-      ? `${window.location.origin}/reset-password`
-      : 'nowdo://reset-password';
-      
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    });
-      
+    try {
+      const redirectTo = Platform.OS === 'web' 
+        ? `${window.location.origin}/reset-password`
+        : 'nowdo://reset-password';
+        
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+        
       if (error) {
         console.error('Supabase auth signup error:', error);
         return { data, error };
