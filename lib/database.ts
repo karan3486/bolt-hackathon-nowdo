@@ -441,6 +441,108 @@ export class DatabaseService {
   }
 
   static async createUserProfile(userId: string, profile: Partial<UserProfile>) {
+    // First check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existingProfile) {
+      // Update existing profile
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          email: profile.email,
+          profile_picture_url: profile.profilePictureUrl,
+          phone_number: profile.phoneNumber,
+          date_of_birth: profile.dateOfBirth,
+          location: profile.location,
+          profession: profile.profession,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating user profile:', error);
+        throw new Error(`Failed to update user profile: ${error.message}`);
+      }
+
+      return data;
+    } else {
+      // Create new profile
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: userId,
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          email: profile.email,
+          profile_picture_url: profile.profilePictureUrl,
+          phone_number: profile.phoneNumber,
+          date_of_birth: profile.dateOfBirth,
+          location: profile.location,
+          profession: profile.profession,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating user profile:', error);
+        throw new Error(`Failed to create user profile: ${error.message}`);
+      }
+
+      return data;
+    }
+  }
+
+  static async ensureUserRecordsExist(userId: string) {
+    try {
+      // Check if user profile exists, create if not
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!profile) {
+        await this.createUserProfile(userId, {});
+      }
+
+      // Check if user preferences exist, create if not
+      const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!preferences) {
+        await this.createUserPreferences(userId);
+      }
+
+      // Check if user settings exist, create if not
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!settings) {
+        await this.createUserSettings(userId);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error ensuring user records exist:', error);
+      return false;
+    }
+  }
+
+  static async createUserProfile(userId: string, profile: Partial<UserProfile>) {
     const { data, error } = await supabase
       .from('user_profiles')
       .insert({

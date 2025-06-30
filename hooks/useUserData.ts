@@ -55,6 +55,9 @@ export function useUserData(options: UseUserDataOptions = {}) {
     setError(null);
 
     try {
+      // Ensure user records exist before loading data
+      await DatabaseService.ensureUserRecordsExist(user.id);
+      
       const [tasks, habits, habitCompletions, pomodoroSessions, preferences, profile] = await Promise.all([
         DatabaseService.getTasks(user.id),
         DatabaseService.getHabits(user.id),
@@ -93,6 +96,9 @@ export function useUserData(options: UseUserDataOptions = {}) {
     setError(null);
 
     try {
+      // Ensure user records exist before loading profile
+      await DatabaseService.ensureUserRecordsExist(user.id);
+      
       const profile = await DatabaseService.getUserProfile(user.id);
       setState(prev => ({
         ...prev,

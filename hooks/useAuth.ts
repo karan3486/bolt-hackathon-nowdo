@@ -99,16 +99,35 @@ export function useAuth() {
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: undefined, // Disable email confirmation for now
         },
-      },
-    });
-    return { data, error };
+      });
+
+      // If signup was successful and we have a user, ensure their records are created
+      if (data.user && !error) {
+        try {
+          // Import DatabaseService here to avoid circular dependency
+          const { DatabaseService } = await import('../lib/database');
+          await DatabaseService.ensureUserRecordsExist(data.user.id);
+        } catch (dbError) {
+          console.error('Error creating user records after signup:', dbError);
+          // Don't fail the signup, just log the error
+        }
+      }
+
+      return { data, error };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { data: null, error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
