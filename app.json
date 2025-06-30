@@ -3,21 +3,15 @@
     "name": "NowDo",
     "slug": "now-do",
     "version": "1.0.0",
-    "scheme": "nowdo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "scheme": "nowdo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
       "expo-router", 
       "expo-font", 
-      "expo-web-browser",
-      [
-        "expo-linking",
-        {
-          "prefixes": ["nowdo://", "https://nowdo.app"]
-        }
-      ]
+      "expo-web-browser"
     ],
     "infoPlist": {
       "NSCameraUsageDescription": "This app uses the camera to allow you to take profile pictures and upload photos for your tasks and habits.",
@@ -41,16 +35,14 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": "https://nowdo.app"
-      },
+      "router": {},
       "eas": {
         "projectId": "9b6989c6-31a0-4e9a-aa66-1e9d4fed10b1"
       }
