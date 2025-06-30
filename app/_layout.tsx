@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { router } from 'expo-router';
+import { router, Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -18,7 +18,22 @@ import { loadHabitsFromDatabase } from '../store/slices/habitsSlice';
 import { loadSessionsFromDatabase } from '../store/slices/pomodoroSlice';
 import { setThemeMode } from '../store/slices/themeSlice';
 import { DatabaseService } from '../lib/database';
+import * as Linking from 'expo-linking';
 import Purchases from 'react-native-purchases';
+
+// Configure deep linking
+const linking = {
+  prefixes: ['nowdo://', 'https://nowdo.app'],
+  config: {
+    screens: {
+      '(auth)/verify-email': 'auth/verify',
+      '(auth)/reset-password': 'auth/reset-password',
+      '(auth)/sign-in': 'auth/sign-in',
+      '(auth)/sign-up': 'auth/sign-up',
+      '(tabs)': 'tabs',
+    },
+  },
+};
 
 // RevenueCat Configuration
 const configureRevenueCat = async () => {
@@ -153,6 +168,22 @@ function ThemedApp() {
   // Handle navigation only once when auth state is determined
   useEffect(() => {
     if (!loading && !hasNavigated) {
+      // Handle deep links for auth flows
+      const handleDeepLink = async () => {
+        const url = await Linking.getInitialURL();
+        if (url) {
+          console.log('Deep link detected:', url);
+          
+          // Handle auth-specific deep links
+          if (url.includes('verify') || url.includes('reset-password')) {
+            // Let the specific screens handle these links
+            return;
+          }
+        }
+      };
+      
+      handleDeepLink();
+      
       if (!user) {
         // Only handle web-specific redirects on web platform
         if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
@@ -211,6 +242,15 @@ function ThemedApp() {
 
 export default function RootLayout() {
   useFrameworkReady();
+  
+  // Set up deep linking listener
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      console.log('Deep link received:', url);
+    });
+    
+    return () => subscription.remove();
+  }, []);
 
   return (
     <ReduxProvider store={store}>

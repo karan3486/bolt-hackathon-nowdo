@@ -100,6 +100,11 @@ export function useAuth() {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
+      // Get the current URL for proper redirects
+      const redirectUrl = Platform.OS === 'web' 
+        ? `${window.location.origin}/(auth)/sign-in` 
+        : 'nowdo://auth/verify';
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -107,7 +112,7 @@ export function useAuth() {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: undefined, // Disable email confirmation for now
+          emailRedirectTo: redirectUrl,
         },
       });
 
@@ -222,12 +227,20 @@ export function useAuth() {
   };
 
   const resetPassword = async (email: string) => {
+    // Get the current URL for proper redirects
     const redirectTo = Platform.OS === 'web' 
-      ? `${window.location.origin}/reset-password`
-      : 'nowdo://reset-password';
+      ? `${window.location.origin}/(auth)/reset-password`
+      : 'nowdo://auth/reset-password';
       
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
+    });
+    return { data, error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
     });
     return { data, error };
   };
@@ -240,5 +253,6 @@ export function useAuth() {
     signInWithGoogle,
     signInWithProvider,
     resetPassword,
+    updatePassword,
   };
 }
