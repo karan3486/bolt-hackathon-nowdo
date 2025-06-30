@@ -377,34 +377,27 @@ export class DatabaseService {
   }
 
   static async createUserPreferences(userId: string, preferences?: Partial<UserPreferences>) {
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          theme: preferences?.theme || 'system',
-          notifications_enabled: preferences?.notificationsEnabled ?? true,
-          work_duration: preferences?.pomodoroSettings?.workDuration || 25,
-          short_break_duration: preferences?.pomodoroSettings?.shortBreakDuration || 5,
-          long_break_duration: preferences?.pomodoroSettings?.longBreakDuration || 15,
-          sessions_until_long_break: preferences?.pomodoroSettings?.sessionsUntilLongBreak || 4,
-          first_launch: preferences?.firstLaunch ?? true,
-        }, {
-          onConflict: 'user_id'
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .insert({
+        user_id: userId,
+        theme: preferences?.theme || 'system',
+        notifications_enabled: preferences?.notificationsEnabled ?? true,
+        work_duration: preferences?.pomodoroSettings?.workDuration || 25,
+        short_break_duration: preferences?.pomodoroSettings?.shortBreakDuration || 5,
+        long_break_duration: preferences?.pomodoroSettings?.longBreakDuration || 15,
+        sessions_until_long_break: preferences?.pomodoroSettings?.sessionsUntilLongBreak || 4,
+        first_launch: preferences?.firstLaunch ?? true,
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating user preferences:', error);
-        throw new Error(`Failed to create user preferences: ${error.message}`);
-      }
-
-      return data;
-    } catch (error: any) {
-      console.error('Database error in createUserPreferences:', error);
-      throw new Error(`Database error: ${error.message}`);
+    if (error) {
+      console.error('Error creating user preferences:', error);
+      throw new Error(`Failed to create user preferences: ${error.message}`);
     }
+
+    return data;
   }
 
   static async updateUserPreferences(userId: string, updates: Partial<UserPreferences>) {
@@ -568,30 +561,37 @@ export class DatabaseService {
   }
 
   static async createUserSettings(userId: string) {
-    const { data, error } = await supabase
-      .from('user_settings')
-      .insert({
-        user_id: userId,
-        theme_preference: 'dark',
-        notifications_enabled: true,
-        email_notifications: true,
-        push_notifications: true,
-        language: 'en',
-        privacy_analytics: true,
-        privacy_crash_reports: true,
-        auto_backup: true,
-        sound_effects: true,
-        haptic_feedback: true,
-      })
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: userId,
+          theme_preference: 'dark',
+          notifications_enabled: true,
+          email_notifications: true,
+          push_notifications: true,
+          language: 'en',
+          privacy_analytics: true,
+          privacy_crash_reports: true,
+          auto_backup: true,
+          sound_effects: true,
+          haptic_feedback: true,
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating user settings:', error);
-      throw new Error(`Failed to create user settings: ${error.message}`);
+      if (error) {
+        console.error('Error creating user settings:', error);
+        throw new Error(`Failed to create user settings: ${error.message}`);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Database error in createUserSettings:', error);
+      throw new Error(`Database error: ${error.message}`);
     }
-
-    return data;
   }
 
   static async updateUserSettings(userId: string, updates: any) {
