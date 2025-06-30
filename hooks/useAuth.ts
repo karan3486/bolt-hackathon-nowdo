@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 
 export interface AuthState {
   user: User | null;
@@ -99,6 +99,11 @@ export function useAuth() {
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    // Determine the redirect URL based on platform
+    const redirectTo = Platform.OS === 'web' 
+      ? `${window.location.origin}/oauth-callback`
+      : 'nowdo://oauth-callback';
+      
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -109,6 +114,7 @@ export function useAuth() {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: redirectTo,
       },
     });
     return { data, error };
@@ -165,11 +171,15 @@ export function useAuth() {
   const signInWithGoogle = async () => {
     try {
       if (Platform.OS === 'web') {
+        const redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/oauth-callback`
+          : 'https://nowdo-app.vercel.app/oauth-callback';
+          
         // Web implementation
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/(tabs)`,
+            redirectTo: redirectUrl,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent',
@@ -180,10 +190,31 @@ export function useAuth() {
       } else {
         // Mobile implementation would require expo-auth-session
         // For now, return an error indicating it's not implemented
-        return { 
-          data: null, 
-          error: { message: 'Google sign-in is currently only available on web. Mobile support coming soon!' } 
-        };
+        try {
+          const redirectUrl = 'nowdo://oauth-callback';
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: redirectUrl,
+              skipBrowserRedirect: true,
+            }
+          });
+          
+          if (error) throw error;
+          
+          if (data?.url) {
+            // Open the URL in the device browser
+            await Linking.openURL(data.url);
+          }
+          
+          return { data, error: null };
+        } catch (error) {
+          console.error('Mobile OAuth error:', error);
+          return { 
+            data: null, 
+            error: { message: 'Google sign-in failed on mobile. Please try again.' } 
+          };
+        }
       }
     } catch (error) {
       return { 
@@ -207,8 +238,8 @@ export function useAuth() {
 
   const resetPassword = async (email: string) => {
     const redirectTo = Platform.OS === 'web'
-      ? `${window.location.origin}/(auth)/oauth-callback`
-      : 'nowdo://(auth)/oauth-callback';
+      ? `${window.location.origin}/oauth-callback`
+      : 'nowdo://oauth-callback';
       
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

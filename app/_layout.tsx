@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { router } from 'expo-router';
+import { router, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -77,6 +77,10 @@ function ThemedApp() {
   const { user, loading, signOut } = useAuth();
   const [hasNavigated, setHasNavigated] = useState(false);
   
+  // Get current navigation state and segments for better navigation control
+  const segments = useSegments();
+  const navigationState = useRootNavigationState();
+  
   // Initialize user data when user is authenticated
   const { 
     tasks, 
@@ -151,8 +155,14 @@ function ThemedApp() {
   }, [themeMode, colorScheme]);
 
   // Handle navigation only once when auth state is determined
+  // This is a more robust approach that works with deep linking
   useEffect(() => {
-    if (!loading && !hasNavigated) {
+    // Wait for navigation to be ready
+    if (!navigationState?.key || loading) return;
+    
+    const inAuthGroup = segments[0] === '(auth)';
+    
+    if (!hasNavigated) {
       if (!user) {
         // Handle web-specific redirects on web platform
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -165,31 +175,21 @@ function ThemedApp() {
           // Check if we're on an auth path
           const isAuthPath = 
             currentPath.includes('/sign-in') || 
-            currentPath.includes('/sign-up') || 
-            currentPath.includes('/forgot-password') ||
-            currentPath.includes('/oauth-callback');
-          
-          if (hasAccessToken) {
-            // If we have an access token in the URL, let Supabase handle it
-            console.log('Access token detected in URL, handling auth');
-            router.replace('/(auth)/oauth-callback');
-          } else if (!isAuthPath) {
-            // Clear any invalid tokens to prevent refresh token errors
-            signOut();
-            // Use router for smoother navigation
-            router.replace('/(auth)/sign-in');
-          }
-        } else if (Platform.OS !== 'web') {
-          // For mobile platforms, navigate to auth without checking paths
+        // If we're not in the auth group, redirect to sign-in
+        if (!inAuthGroup) {
+          // Clear any invalid tokens to prevent refresh token errors
+          signOut();
           router.replace('/(auth)/sign-in');
         }
       } else {
-        // User is authenticated, navigate to main app
-        router.replace('/(tabs)');
+        // If we're in the auth group but user is authenticated, redirect to main app
+        if (inAuthGroup) {
+          router.replace('/(tabs)');
+        }
       }
       setHasNavigated(true);
     }
-  }, [user, loading, hasNavigated, signOut]);
+  }, [user, segments, navigationState?.key, loading, hasNavigated, signOut]);
 
   // Reset navigation flag when user changes (for logout scenarios)
   useEffect(() => {

@@ -3,15 +3,28 @@
     "name": "NowDo",
     "slug": "now-do",
     "version": "1.0.0",
+    "scheme": "nowdo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "nowdo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
-      "expo-router", 
+      [
+        "expo-router",
+        {
+          "origin": "https://nowdo-app.vercel.app"
+        }
+      ],
       "expo-font", 
       "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
       [
         "expo-build-properties",
         {
