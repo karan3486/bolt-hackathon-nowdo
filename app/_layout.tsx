@@ -173,8 +173,8 @@ function ThemedApp() {
           const hasAccessToken = currentHash.includes('access_token=');
           
           // Check if we're on an auth path
-          const isAuthPath = 
-            currentPath.includes('/sign-in') || 
+          const isAuthPath = currentPath.includes('/sign-in');
+        }
         // If we're not in the auth group, redirect to sign-in
         if (!inAuthGroup) {
           // Clear any invalid tokens to prevent refresh token errors
