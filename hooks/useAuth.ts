@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Platform, Linking } from 'react-native';
+import * as Linking from 'expo-linking';
 
 export interface AuthState {
   user: User | null;
@@ -18,6 +19,18 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true;
+    
+    // Set up deep link handler for auth callbacks
+    const handleDeepLink = (event: { url: string }) => {
+      if (event.url.includes('auth-callback') || event.url.includes('access_token')) {
+        console.log('Deep link auth callback detected:', event.url);
+      }
+    };
+    
+    // Register deep link handler
+    if (Platform.OS !== 'web') {
+      Linking.addEventListener('url', handleDeepLink);
+    }
 
     // Get initial session
     const getInitialSession = async () => {
@@ -95,6 +108,11 @@ export function useAuth() {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      
+      // Clean up deep link handler
+      if (Platform.OS !== 'web') {
+        Linking.removeAllListeners('url');
+      }
     };
   }, []);
 
@@ -172,6 +190,10 @@ export function useAuth() {
     try {
       if (Platform.OS === 'web') {
         const redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/auth-callback`
+          : 'https://nowdo-app.vercel.app/auth-callback';
+          
+        const redirectUrl = typeof window !== 'undefined' 
           ? `${window.location.origin}/oauth-callback`
           : 'https://nowdo-app.vercel.app/oauth-callback';
           
@@ -238,8 +260,8 @@ export function useAuth() {
 
   const resetPassword = async (email: string) => {
     const redirectTo = Platform.OS === 'web'
-      ? `${window.location.origin}/oauth-callback`
-      : 'nowdo://oauth-callback';
+      ? `${window.location.origin}/auth-callback`
+      : 'nowdo://auth-callback';
       
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

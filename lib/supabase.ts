@@ -3,9 +3,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
 import { Platform } from 'react-native'
 import { Platform } from 'react-native'
+import { Platform } from 'react-native'
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || ""
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ""
+
+// Get the redirect URL based on platform
+const getRedirectUrl = () => {
+  if (Platform.OS === 'web') {
+    // For web, use the current origin or a fixed URL for production
+    return typeof window !== 'undefined' 
+      ? `${window.location.origin}/auth-callback`
+      : 'https://nowdo-app.vercel.app/auth-callback';
+  } else {
+    // For native, use the deep link URL scheme
+    return 'nowdo://auth-callback';
+  }
+};
 
 // Determine the redirect URL based on platform
 const getRedirectUrl = () => {
@@ -37,6 +51,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    flowType: 'pkce',
+    redirectTo: getRedirectUrl(),
     flowType: 'pkce',
     onAuthStateChange: (event, session) => {
       console.log('Supabase auth event:', event);

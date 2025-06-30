@@ -4,19 +4,22 @@
     "slug": "now-do",
     "version": "1.0.0",
     "scheme": "nowdo",
+    "scheme": "nowdo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "plugins": [
       [
-        "expo-router",
+      ["expo-router", {
+        "origin": "https://nowdo-app.vercel.app"
+      }],
         {
           "origin": "https://nowdo-app.vercel.app"
         }
       ],
       "expo-font", 
       "expo-web-browser",
+      "expo-build-properties"
       [
         "expo-build-properties",
         {
@@ -58,6 +61,7 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png",
+      "origin": "https://nowdo-app.vercel.app"
       "scheme": "nowdo"
     },
     "experiments": {

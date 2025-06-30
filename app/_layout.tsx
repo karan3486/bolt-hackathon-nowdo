@@ -7,6 +7,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useColorScheme, Platform } from 'react-native';
 import { store } from '../store';
+import * as Linking from 'expo-linking';
 import { lightTheme, darkTheme } from '../constants/theme';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useSelector } from 'react-redux';
@@ -82,6 +83,22 @@ function ThemedApp() {
   const navigationState = useRootNavigationState();
   
   // Initialize user data when user is authenticated
+  
+  // Handle deep links for auth
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      // Set up initial URL handler
+      const getInitialURL = async () => {
+        const initialURL = await Linking.getInitialURL();
+        if (initialURL) {
+          console.log('Initial URL:', initialURL);
+        }
+      };
+      
+      getInitialURL();
+    }
+  }, []);
+  
   const { 
     tasks, 
     habits, 
